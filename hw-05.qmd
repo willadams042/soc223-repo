@@ -1,0 +1,137 @@
+---
+title: "hw-05"
+author: "Will Adams"
+format: html
+editor: visual
+embed-resources: true
+---
+
+## Question 1
+
+```{r}
+#| message: false
+library(tidyverse)
+exercise_data <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/visualize_data.csv")
+glimpse(exercise_data)
+```
+
+I expect that people who record more exercise will have less BMI.
+
+```{r}
+cor(exercise_data$Exercise, exercise_data$BMI)
+
+exercise_data |>
+  ggplot(aes(x = Exercise, y = BMI)) +
+  geom_point()
+```
+
+The result is a dinosaur drawing.
+
+## Question 2
+
+```{r}
+#| message: false
+library(causact)
+glimpse(corruptDF)
+```
+
+CPI 2017 is the Corruption Perceptions Index score for different countries on a scale of 0 (highly corrupt) - 100 (very clean) for the year 2017.
+
+HDI 2017 is the Human Development Index score for different countries based on factors including longevity, education, and income for the year 2017.
+
+## Question 3
+
+```{r}
+corruptDF |>
+  ggplot(aes(x = HDI2017, y = CPI2017)) +
+  geom_point()
+```
+
+There is a positive relationship between HDI and CPI. As a country scores higher on the HDI, they appear to become more clean with a higher score on the CPI.
+
+## Question 4
+
+```{r}
+corruptDF |>
+  ggplot(aes(x = HDI2017, y = CPI2017)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "lightblue")
+```
+
+```{r}
+corruptDF |>
+  ggplot(aes(x = HDI2017, y = CPI2017)) +
+  geom_point() +
+  geom_smooth(method = "gam", se = FALSE, color = "lightgreen")
+```
+
+I prefer the gam fit, because it is more flexible in modeling the relationship between the two variables, which enables us to see how the datasets might be related in a non-linear fashion.
+
+## Question 5
+
+```{r}
+corruptDF |>
+  ggplot(aes(x = HDI2017, 
+             y = CPI2017, 
+             fill = region,
+             color = region)) +
+  geom_point() +
+  facet_wrap(~region) +
+  geom_smooth(method = "gam", se = FALSE)
+```
+
+The graph was quite cluttered, so I facet-wrapped by region. This shows the relationship between the CPI and HDI but segmented by region.
+
+## Question 6
+
+```{r}
+corruptDF |>
+  ggplot(aes(x = HDI2017, 
+             y = CPI2017, 
+             fill = region,
+             color = region)) +
+  geom_point() +
+  facet_wrap(~region) +
+  geom_smooth(method = "gam", se = FALSE) +
+  scale_x_reverse()
+```
+
+## Question 7
+
+```{r}
+corruptDF |>
+  ggplot(aes(x = HDI2017, 
+             y = CPI2017, 
+             fill = region,
+             color = region)) +
+  geom_point() +
+  facet_wrap(~region) +
+  geom_smooth(method = "gam", se = FALSE) +
+  scale_x_reverse() +
+  labs(x = "HDI (2017)",
+       y = "CPI (2017)",
+       title = "Human Development Relationship with \n Corruption Perceptions",
+       subtitle = "Data points are countries",
+       caption = "Source: causact")
+```
+
+## Question 8
+
+```{r}
+corruptDF |>
+  ggplot(aes(x = HDI2017, 
+             y = CPI2017, 
+             fill = region,
+             color = region)) +
+  geom_point() +
+  facet_wrap(~region) +
+  geom_smooth(method = "gam", se = FALSE) +
+  scale_x_reverse() +
+  labs(x = "HDI (2017)",
+       y = "CPI (2017)",
+       title = "Human Development Relationship with \n Corruption Perceptions",
+       subtitle = "Data points are countries",
+       caption = "Source: causact")
+
+ggsave(filename = "hw-05.png")
+```
