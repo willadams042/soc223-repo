@@ -1,0 +1,128 @@
+---
+title: "hw-06-1"
+author: "Will Adams"
+format: html
+editor: visual
+embed-resources: true
+---
+
+## Question 1
+
+```{r}
+#| message: false
+
+library(tidyverse)
+
+tv_ratings <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/tv_ratings.csv")
+glimpse(tv_ratings)
+```
+
+```{r}
+tv_long <- tv_ratings |>
+  group_by(title) |> 
+  summarise(num_seasons = n()) |> 
+  ungroup() |> 
+  left_join(tv_ratings, by = "title") 
+
+tv_long <- tv_long |> 
+  filter(num_seasons >= 5)
+
+tv_long |>
+  ggplot(aes(x = seasonNumber, 
+             y = av_rating,
+             group = title)) +
+  geom_line() +
+  labs(x = "Season",
+       y = "Average Rating")
+```
+
+It is too messy to draw any real conclusions, except for the fact that the shows sampled have average ratings above 6, and some shows which have more than 5 seasons see a big drop in the ratings of some particular seasons.
+
+## Question 2
+
+```{r}
+tv_long |>
+  ggplot(aes(x = seasonNumber, 
+             y = av_rating,
+             group = title)) +
+  geom_line() +
+  labs(x = "Season",
+       y = "Average Rating") +
+  facet_wrap(~genres)
+```
+
+'Crime, Drama, and Mystery' and 'Drama, Romance' genres appear to be the two shows that lasted the longest. The show whose ratings plummeted is 'Are You Afraid of the Dark.'
+
+## Question 3
+
+```{r}
+best_rated <- tv_ratings |>
+  filter(av_rating >= 9)
+
+best_rated |>
+  ggplot(aes(x = genres)) +
+  geom_bar() +
+  coord_flip()
+```
+
+Coord_flip() changes the x and y axis. Drama has the most top-rated shows with 12 shows.
+
+## Question 4
+
+```{r}
+comedies_dramas <- tv_ratings |>
+  mutate(is_comedy = if_else(str_detect(genres, "Comedy"), 1, 0)) |>
+  filter(is_comedy == 1 | genres == "Drama") |>
+  mutate(genres = if_else(genres == "Drama","Drama","Comedy"))
+
+glimpse(comedies_dramas)
+```
+
+```{r}
+comedies_dramas |>
+  ggplot(aes(x = av_rating, group = genres, color = genres)) +
+  geom_density() +
+  labs(x = "Average Rating",
+       y = "Density",
+       title = "Distribution of average ratings \n for comedies and dramas")
+```
+
+Your prediction holds somewhat true. It appears that under your classification of comedies, there is a higher proportion of comedies rated around an average rating of 8 than there are dramas, yet the peak being lower for dramas means the ratings for these shows are more spread out. Assuming the best shows have average ratings \>= 8, this suggests that the best comedies do rival the best dramas.
+
+## Question 5
+
+```{r}
+comedies_dramas |>
+  ggplot(aes(x = av_rating, group = genres, color = genres)) +
+  geom_histogram() +
+  labs(x = "Average Rating",
+       y = "Frequency",
+       title = "Distribution of average ratings \n for comedies and dramas")
+```
+
+The histogram shows us how many shows there are for each genre in this dataset - i.e. we are looking at more comedies than dramas here.
+
+```{r}
+comedies_dramas |>
+  ggplot(aes(x = av_rating, group = genres, color = genres)) +
+  geom_freqpoly() +
+  labs(x = "Average Rating",
+       y = "Frequency",
+       title = "Distribution of average ratings \n for comedies and dramas")
+```
+
+The geom_freqpoly shows us the frequency of shows and their ratings as well as the distribution, allowing us to see the peaks and valleys in the distribution. I think this is the most informative because it shows both of these elements without a smooth line so we can see more data points.
+
+## Question 6
+
+```{r}
+comedies_dramas |>
+  ggplot(aes(x = av_rating, y = share)) +
+  geom_bin_2d()
+```
+
+```{r}
+comedies_dramas |>
+  ggplot(aes(x = av_rating, y = share, fill = genres)) +
+  geom_bin_2d()
+```
