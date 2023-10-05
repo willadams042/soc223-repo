@@ -1,0 +1,128 @@
+---
+title: "hw-06-2"
+author: "Will Adams"
+format: html
+editor: visual
+embed-resources: true
+---
+
+## Question 1
+
+```{r}
+#| message: false
+library(tidyverse)
+wncaa <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/wncaa.csv")
+
+glimpse(wncaa)
+```
+
+```{r}
+wncaa_champs <- wncaa |>
+  filter(tourney_finish == "Champ")
+
+wncaa_graph <- wncaa_champs |>
+  group_by(school) |>
+  summarize(total_wins = n(),
+            percent_wins = 100*total_wins/ nrow(wncaa_champs)) |>
+  arrange(desc(total_wins))
+
+wncaa_graph |>
+  ggplot(aes(x = reorder(school, total_wins), y = percent_wins)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(x = "School",
+       y = "Percentage of WNCAA Tournament Wins")
+```
+
+UConn have the most with 11 wins, followed by Tennessee with 8 wins. These two teams have been dominant since the next closest number of wins is 2 or 1.
+
+## Question 2
+
+```{r}
+champ_names <- unique(wncaa_graph$school)
+
+winners <- wncaa |>
+  filter(school %in% champ_names)
+
+winners_new <- winners |>
+  group_by(school) |>
+  mutate(mean_seed = mean(seed)) |>
+  ungroup()
+
+winners_new |>
+  ggplot(aes(x = reorder(school, mean_seed), y = seed)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(alpha = 0.5) +
+  coord_flip() +
+  labs(x = "School",
+       y = "Seed")
+```
+
+Based on the previous question, it does not surprise me that Tenn and UConn are most often rated the highest seeds.
+
+```{r}
+winners_new |>
+  ggplot(aes(x = reorder(school, mean_seed), y = seed)) +
+  geom_violin() +
+  coord_flip() +
+  labs(x = "School",
+       y = "Seed")
+```
+
+I think I prefer the boxplot in this case, because although the violin shows a graphical distribution of the points, it does not indicate the mean and quartiles within the seeding for each school and the violin looks flat since it lacks enough observations.
+
+## Question 3
+
+```{r}
+winners_new |>
+  ggplot(aes(x = reorder(school, mean_seed), y = seed)) +
+  geom_point(alpha = 0.3) +
+  coord_flip() +
+  labs(x = "School",
+       y = "Seed")
+```
+
+It does not work as well because unless you use the position = "jitter", we experience overplotting on the same points since the seed rankings are whole integers. Using alpha is useful to help us understand where there are more points, but the distribution is still unclear.
+
+## Question 4
+
+```{r}
+winners_mean_sd <- winners |> 
+  group_by(school) |> 
+  summarize(across(where(is.numeric),
+                   list(mean = mean,
+                        sd = sd)))
+
+winners_mean_sd |>
+  ggplot(aes(x = reorder(school, reg_percent_mean), y = reg_percent_mean)) +
+  geom_point() +
+  coord_flip() +
+  labs(x = "School",
+       y = "Avg win % across season")
+```
+
+Texas A&M had the lowest regular season win percentage. The teams that have won the tournament more generally have a higher win percentage across the season.
+
+```{r}
+winners_mean_sd |>
+  ggplot(aes(x = reorder(school, reg_percent_mean), y = reg_percent_mean)) +
+  geom_pointrange(mapping = aes(ymin = reg_percent_mean - reg_percent_sd, 
+                  ymax = reg_percent_mean + reg_percent_sd)) +
+  coord_flip() +
+  labs(x = "School",
+       y = "Avg win % across season")
+```
+
+Texas A&M have the narrowest interval, meaning that out of all the teams here A&M win the closest to the same % each season (they have the the least variance from their mean win % per season).
+
+```{r}
+winners_mean_sd |>
+  ggplot(aes(x = reorder(school, reg_percent_mean), y = reg_percent_mean)) +
+  geom_linerange(mapping = aes(ymin = reg_percent_mean - reg_percent_sd, 
+                  ymax = reg_percent_mean + reg_percent_sd)) +
+  coord_flip() +
+  labs(x = "School",
+       y = "Avg win % across season")
+```
+
+As you can see above, you can make the same plot using geom_linerange. The result does not show the point at which the mean win % across the season lies, which means it does the same thing but you must add geom_point() for it to be useful.

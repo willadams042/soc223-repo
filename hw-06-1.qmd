@@ -87,20 +87,20 @@ comedies_dramas |>
        title = "Distribution of average ratings \n for comedies and dramas")
 ```
 
-Your prediction holds somewhat true. It appears that under your classification of comedies, there is a higher proportion of comedies rated around an average rating of 8 than there are dramas, yet the peak being lower for dramas means the ratings for these shows are more spread out. Assuming the best shows have average ratings \>= 8, this suggests that the best comedies do rival the best dramas.
+Your prediction generally holds true. It appears that under your classification of comedies, there is a higher proportion of comedies rated around an average rating of 8 than there are dramas, yet the peak being lower for dramas means the ratings for these shows are more spread out. Assuming the best shows have average ratings \>= 8, this suggests that the best comedies do rival the best dramas since the curves largely overlap.
 
 ## Question 5
 
 ```{r}
 comedies_dramas |>
   ggplot(aes(x = av_rating, group = genres, color = genres)) +
-  geom_histogram() +
+  geom_histogram(position = "dodge") +
   labs(x = "Average Rating",
        y = "Frequency",
        title = "Distribution of average ratings \n for comedies and dramas")
 ```
 
-The histogram shows us how many shows there are for each genre in this dataset - i.e. we are looking at more comedies than dramas here.
+The histogram shows us how many shows there are for each genre in this dataset by mapping the frequency and spread of ratings. We are looking at more comedies than dramas in this set.
 
 ```{r}
 comedies_dramas |>
@@ -111,18 +111,26 @@ comedies_dramas |>
        title = "Distribution of average ratings \n for comedies and dramas")
 ```
 
-The geom_freqpoly shows us the frequency of shows and their ratings as well as the distribution, allowing us to see the peaks and valleys in the distribution. I think this is the most informative because it shows both of these elements without a smooth line so we can see more data points.
+The geom_freqpoly shows us the frequency of shows and their ratings as well as the distribution, allowing us to see the peaks and valleys in the distribution. I think this is the most informative because it shows both of these elements without a smooth line so we can see more data points in the distribution.
 
 ## Question 6
 
 ```{r}
 comedies_dramas |>
   ggplot(aes(x = av_rating, y = share)) +
-  geom_bin_2d()
+  geom_bin_2d() +
+  labs(x = "Average Rating",
+       y = "Density")
 ```
+
+This new visualization shows us the same shaped distribution clustered around an average rating of 8. The 2d bin plot shows us the density of data points in each region, which makes it easier to visualize the distribution of data and see where points are more concentrated.
 
 ```{r}
 comedies_dramas |>
   ggplot(aes(x = av_rating, y = share, fill = genres)) +
-  geom_bin_2d()
+  geom_bin_2d() +
+  labs(x = "Average Rating",
+       y = "Density")
 ```
+
+Adding the fill aesthetic shows us the same plot but according to genre. Most comedies are around a rating of 8 whereas dramas are more spread out from 4-10. The big outlier appears to have been a season of the Drama named Dekalog rated around 8 which acquired lots of viewership for its show.
