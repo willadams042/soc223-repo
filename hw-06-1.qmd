@@ -120,7 +120,7 @@ comedies_dramas |>
   ggplot(aes(x = av_rating, y = share)) +
   geom_bin_2d() +
   labs(x = "Average Rating",
-       y = "Density")
+       y = "Share of viewership acquired by season")
 ```
 
 This new visualization shows us the same shaped distribution clustered around an average rating of 8. The 2d bin plot shows us the density of data points in each region, which makes it easier to visualize the distribution of data and see where points are more concentrated.
@@ -130,7 +130,7 @@ comedies_dramas |>
   ggplot(aes(x = av_rating, y = share, fill = genres)) +
   geom_bin_2d() +
   labs(x = "Average Rating",
-       y = "Density")
+       y = "Share of viewership acquired by season")
 ```
 
 Adding the fill aesthetic shows us the same plot but according to genre. Most comedies are around a rating of 8 whereas dramas are more spread out from 4-10. The big outlier appears to have been a season of the Drama named Dekalog rated around 8 which acquired lots of viewership for its show.
