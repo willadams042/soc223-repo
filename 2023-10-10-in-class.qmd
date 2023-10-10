@@ -1,0 +1,60 @@
+---
+title: "2023-10-10-in-class.qmd"
+author: "Will Adams"
+format: html
+editor: visual
+---
+
+## Now you practice
+
+```{r}
+#| message: false
+library(tidyverse)
+library(moderndive)
+library(patchwork)
+theme_set(theme_light())
+```
+
+```{r}
+d <- evals |>
+  rename(bty = bty_avg,
+         sex = gender)
+
+glimpse(d)
+```
+
+```{r}
+mod3 <- lm(bty ~ age,
+           data = d)
+
+get_regression_table(mod3)
+```
+
+It appears that beauty is slightly negatively correlated with age.
+
+$$\hat{y} = 6.713 - 0.047 x$$
+
+```{r}
+d |>
+  ggplot(aes(x = age,
+             y = bty)) +
+  geom_jitter(alpha = .3) +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              fullrange = TRUE) +
+  scale_x_continuous(limits = c(0,85)) +
+  geom_vline(xintercept = 0,
+             color = "red",
+             linetype = "dotted")
+```
+
+```{r}
+ggplot(d,
+       aes(x = bty,
+           y = sex)) +
+    geom_boxplot(coef = 0,
+               outlier.alpha = .3,
+               width = .5) +
+  geom_jitter(alpha = .3,
+              height = .2)
+```
