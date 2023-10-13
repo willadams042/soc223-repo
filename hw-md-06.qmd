@@ -1,0 +1,212 @@
+---
+title: "hw-md-05"
+author: "Will Adams"
+format: html
+editor: visual
+embed-resources: true
+---
+
+```{r}
+library(tidyverse)
+
+twitch_data <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/twitchdata-update.csv")
+```
+
+```{r}
+library(janitor)
+twitch_data <- clean_names(twitch_data)
+
+colnames(twitch_data)
+```
+
+## Question 1
+
+```{r}
+random_sample_1 <- twitch_data |>
+  sample_n(size = 5) |>
+  select(channel, average_viewers, followers)
+
+print(random_sample_1)
+```
+
+The average viewers seems quite similar despite big differences in the follower count.
+
+```{r}
+twitch_data |>
+  select(channel, average_viewers, followers) |>
+  summary()
+```
+
+The summary shows the min, max, mean, median and quartiles. There is a large difference between the largest and smallest channel, but the average appears to be much closer to the lower end of these sizes distribution.
+
+```{r}
+twitch_data |>
+  ggplot(aes(x = average_viewers,
+             y = followers)) +
+  geom_point(alpha = 0.3) +
+  labs(x = "Average Viewers",
+       y = "Followers",
+       title = "Twitch channels by avg viewers
+       and followers")
+```
+
+The data is hard to read because most channels have under 2.5mm followers and less than 50k average viewers.
+
+```{r}
+twitch_data |>
+  ggplot(aes(x = average_viewers,
+             y = followers)) +
+  geom_point(alpha = 0.3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(x = "Average Viewers",
+       y = "Followers",
+       title = "Twitch channels by avg viewers
+       and followers")
+```
+
+Now it is much easier to see the data points, which appear to have a positive correlation.
+
+```{r}
+twitch_data <- twitch_data |>
+  mutate(log_viewers = log10(average_viewers), 
+         log_followers = log10(followers))
+```
+
+## Question 2
+
+```{r}
+library(broom)
+
+fit1 <- lm(log_viewers ~ log_followers, 
+           data = twitch_data)
+  
+tidy(fit1)
+```
+
+$1.1^{0.59} = 1.0578$
+
+A 10% increase in followers, is associated with a 5.8% increase in the average number of viewers.
+
+## Question 3
+
+```{r}
+library(broom)
+
+pred_data <- augment(fit1)
+
+glimpse(pred_data)
+```
+
+```{r}
+pred_data |>
+  ggplot(aes(x = log_followers, 
+             y = log_viewers)) +
+  geom_jitter(alpha = 0.4) + 
+  geom_line(aes(x = log_followers, 
+                y = .fitted), 
+            col = "pink") + 
+  theme_minimal() +
+  labs(subtitle = "Fitted Model and Raw Data", 
+       title = "Followers & Average Viewership", 
+       x = "log(followers)", 
+       y = "log(viewers)")
+```
+
+The model does describe the relationship well because our line of best fit fits the data quite well.
+
+```{r}
+pred_data |>
+  ggplot(aes(x = log_followers, 
+             y = .resid)) +
+  geom_point(alpha = 0.4) + 
+  geom_smooth(method = lm, 
+            col = "pink") + 
+  theme_minimal() +
+  labs(subtitle = "Fitted Model and Raw Data", 
+       title = "Residuals & Followers", 
+       x = "log(followers)", 
+       y = "Residuals")
+```
+
+There are a few big residuals, but they occur across the whole range. In fact, geom_smooth() is showing us that the model predicts the data quite well because there is no skew in the residual vs. log(followers) line.
+
+## Question 4
+
+```{r}
+random_sample_2 <- twitch_data |>
+  sample_n(size = 5) |>
+  select(channel, average_viewers, language)
+
+print(random_sample_2)
+```
+
+The summary is not as useful as before since language is a categorical variable.
+
+```{r}
+library(skimr)
+
+twitch_data |>
+  group_by(language) |>
+  skim(average_viewers)
+```
+
+```{r}
+twitch_data |>
+  ggplot(aes(x = language)) +
+  geom_bar() +
+  coord_flip() +
+  labs(x = "Number of Channels",
+       y = "Language",
+       title = "Twitch channels by language")
+
+twitch_data |>
+  ggplot(aes(x = average_viewers,
+             y = language)) +
+  geom_boxplot(alpha = 0.3) +
+  labs(x = "Average Viewers",
+       y = "Language",
+       title = "Twitch channels by avg viewers
+       and language")
+```
+
+There are way more English channels, and when we segment by viewers it appears English, Spanish, Korean, and German are the channels with the highest avg viewers.
+
+## Question 5
+
+```{r}
+twitch_data <- twitch_data |> 
+  mutate(language = as.factor(language), 
+         language = relevel(language, ref = "English"))
+
+fit2 <- lm(average_viewers ~ language, 
+           data = twitch_data)
+  
+tidy(fit2)
+```
+
+There are lots of negative coefficients, which suggests that most languages have lower average viewing than English. There are a few with positive coefficients which means that average viewing is higher than English, including Arabic, Russian and Spanish.
+
+## Question 6
+
+```{r}
+pred_data_2 <- augment(fit2)
+
+glimpse(pred_data_2)
+```
+
+```{r}
+pred_data_2 |>
+  ggplot(aes(x = average_viewers, 
+             y = .resid)) +
+  geom_point(alpha = 0.3) + 
+  geom_smooth(method = lm, 
+            col = "turquoise") +
+  theme_minimal() +
+  labs(subtitle = "Fitted Model and Raw Data", 
+       title = "Residuals & Viewers", 
+       x = "Avg Viewers", 
+       y = "Residuals")
+```
+
+Our model appears to have missed the residuals when average viewers becomes larger, especially for two largest channels, where the residuals are 142530.18557 and 119637.77027, respectively.
