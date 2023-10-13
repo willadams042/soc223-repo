@@ -206,7 +206,8 @@ pred_data_2 |>
   labs(subtitle = "Fitted Model and Raw Data", 
        title = "Residuals & Viewers", 
        x = "Avg Viewers", 
-       y = "Residuals")
+       y = "Residuals") +
+  scale_x_log10()
 ```
 
 Our model appears to have missed the residuals when average viewers becomes larger, especially for two largest channels, where the residuals are 142530.18557 and 119637.77027, respectively.
