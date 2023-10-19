@@ -1,0 +1,67 @@
+---
+title: "md-06-demo"
+author: "Will Adams"
+format: html
+editor: visual
+---
+
+## In class
+
+```{r}
+#| message: false
+library(tidyverse)
+library(moderndive)
+library(ggthemes)
+library(patchwork)
+theme_set(theme_light())
+
+data(evals)
+glimpse(evals)
+```
+
+```{r}
+d <- evals |>
+  rename(bty = bty_avg,    # just shorter to type
+         sex = gender)     # actually what they have
+
+glimpse(d)
+```
+
+Predicting by age:
+
+```{r}
+mod4 <- lm(score ~ age,
+           data = d)
+
+get_regression_table(mod4)
+get_regression_summaries(mod4)
+
+mod4_preds <- get_regression_points(mod4)
+head(mod4_preds)
+```
+
+```{r}
+#| echo: false
+ggplot(d,
+       aes(x = age,
+           y = score)) +
+  geom_jitter(alpha = .3) +
+  geom_hline(yintercept = mean(d$score),
+             color = "blue") +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              color = "red",
+              linetype = "dashed") +
+  labs(x = "Age",
+       y = "Evaluation",
+       title = "Mean vs. regression line")
+
+```
+
+```{r}
+var_yhat4 <- mod4_preds |>
+  pull(residual) |> 
+  var()
+
+var_yhat4
+```

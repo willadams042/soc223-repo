@@ -1,0 +1,297 @@
+---
+title: "MD06 Demo, Part I"
+format: html
+editor: visual
+---
+
+Load packages and set theme.
+
+```{r}
+#| message: false
+library(tidyverse)
+library(moderndive)
+library(ggthemes)
+library(patchwork)
+theme_set(theme_light())
+```
+
+Let's look at the MD evaluations data.
+
+```{r}
+data(evals)
+glimpse(evals)
+```
+
+We are going to ask whether the "beauty" of an instructor predicts their teaching evaluations.
+
+```{r}
+d <- evals |>
+  rename(bty = bty_avg,    # just shorter to type
+         sex = gender)     # actually what they have
+
+glimpse(d)
+```
+
+Let's look at the first few cases.
+
+```{r}
+head(d)
+```
+
+Here's the regression from last week.
+
+```{r}
+mod1 <- lm(score ~ bty,
+           data = d)
+
+get_regression_table(mod1)
+```
+
+"Someone who has a"0" beauty score, we expect teaching evaluation of 3.88" - simply interpreting line when x = 0, y = 3.88.
+
+"Every time I increase 1 beauty score from 4-\>5, my best guess of teaching evaluation will increase by 0.067." - slope of the line
+
+Let's look at the predictions and residuals.
+
+```{r}
+mod1_preds <- get_regression_points(mod1) #shows model prediction under 'score_hat' here vs. actual 'score', and the residual shows difference between what we saw and what we expected to see
+
+head(mod1_preds)
+```
+
+Here's the regression line (blue).
+
+```{r}
+#| echo: false
+ggplot(d,
+       aes(x = bty,
+           y = score)) +
+  geom_jitter(alpha = .3) +
+  geom_smooth(method = "lm",
+              se = FALSE) + #ignore standard error for now, focus on the predictions
+  labs(x = "Beauty",
+       y = "Evaluation",
+       title = "Simple regression results")
+```
+
+Here are the residuals.
+
+```{r}
+#| echo: false
+ggplot(mod1_preds,
+       aes(x = bty,
+           y = residual)) + #rotates regression graph, y axis becomes residual
+  geom_jitter(alpha = .3) +
+  geom_hline(yintercept = 0,
+             color = "blue") +
+  labs(x = "Beauty",
+       y = "Residual",
+       title = "Simple regression residuals")
+```
+
+One way to quantify how well a predictor predicts the outcome is to use the **variance**. We've seen this already but let's review. Here's the formula. $\bar{y}$ is the mean of $y$.
+
+$$
+V(y) = \frac{1}{n-1}\sum_{i=1}^{n}(y_i - \bar{y})^2
+$$
+
+Since our outcome is evaluation score, we can just do that.
+
+```{r}
+var_y <- d |>  #basically - avg squared difference from observations to mean. regression is the study of variance. 
+  pull(score) |> 
+  var()
+
+var_y
+```
+
+This is equivalent to the variance of the "residuals" when we just guess the mean value for every person!
+
+```{r}
+#| echo: false
+ggplot(d,
+       aes(x = bty,
+           y = score)) +
+  geom_jitter(alpha = .3) +
+  geom_hline(yintercept = mean(d$score),
+             color = "blue") +
+  labs(x = "Beauty",
+       y = "Evaluation",
+       title = "Guessing the mean for everyone")
+
+#variance is a regression, where we assume the slope is 0. e.g. guessing the average evaluation score for everyone.
+```
+
+Adding `beauty` as a predictor improves our guess.
+
+```{r}
+#| echo: false
+ggplot(d,
+       aes(x = bty,
+           y = score)) +
+  geom_jitter(alpha = .3) +
+  geom_hline(yintercept = mean(d$score),
+             color = "blue") +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              color = "red",
+              linetype = "dashed") +
+  labs(x = "Beauty",
+       y = "Evaluation",
+       title = "Mean vs. regression line")
+
+#is the red line (regression) going to give us a better guess than the blue line (guess). In the sample, yes. But of course, we are using sample to make predictions about the sample...we will quantify uncertainty later.
+```
+
+Now let's see what the spread looks like if we look at the residuals from the regression line.
+
+```{r}
+var_yhat1 <- mod1_preds |>
+  pull(residual) |> 
+  var()
+
+var_yhat1
+```
+
+If we take the ratio of these and subtract it from one, that gives us the $R^2$ or "proportion of variance explained" by beauty scores.
+
+```{r}
+1 - (var_yhat1 / var_y)
+
+#when we allow beauty to inform our guess, how much better do we do?
+```
+
+It looks like "beauty" can account for about `r round((1 - (var_yhat1 / var_y)) * 100, 1)` percent of the variance in the evaluation scores.
+
+In other words, if we try to guess instructors' evaluation scores, our guesses will be `r round((1 - (var_yhat1 / var_y)) * 100, 1)` percent *less wrong* on average if we know the instructor's beauty rating.
+
+We can get this from `broom::glance()` or `moderndive::get_regression_summaries()` without doing it manually. The latter will be a more curated list of things you'll need for this course.
+
+```{r}
+broom::glance(mod1)
+moderndive::get_regression_summaries(mod1)
+
+#summary(d@bty)
+#max(d$bty)*0.0.67 - min(d$bty)*0.0.67 - to understand how big of a difference could beauty possibly make.  If we compare model prediction of ugliest/ prettiest, model thinks biggest diff that can make is 0.4355 points on our 1-10 scale.
+```
+
+Let's try a different predictor. Let's predict ratings with `sex`.
+
+```{r}
+mod2 <- lm(score ~ sex,
+           data = d)
+
+get_regression_table(mod2)
+get_regression_summaries(mod2)
+```
+
+Looks like male instructors get slightly better evaluations but this only accounts for a tiny bit of the of the variance. Don't be confused however: small amounts of variance can be really important even if they don't tell the whole story of variability.
+
+In general, we are not going to want to do this with different variables one by one. We want to do **multiple regression**.
+
+```{r}
+mod3 <- lm(score ~ bty + sex,
+           data = d)
+
+get_regression_table(mod3)
+```
+
+Here's what this model does.
+
+```{r, echo=FALSE}
+ggplot(d,
+       aes(x = bty,
+           y = score,
+           group = sex,
+           color = sex)) +
+  geom_jitter(alpha = .3) +
+  geom_parallel_slopes(se = FALSE) +  # this is a modern dive thing!
+  theme(legend.position = "top")
+```
+
+Here's the formula:
+
+$$
+\widehat{score}_i = 3.75 + .074(beauty_i) + .172(male_i)
+$$
+
+We might instead prefer a model like this, which allows the relationship between beauty and evaluations to be *different* for male and female instructors.
+
+```{r, echo=FALSE}
+ggplot(d,
+       aes(x = bty,
+           y = score,
+           group = sex,
+           color = sex)) +
+  geom_jitter(alpha = .3) +
+  geom_smooth(method = "lm",
+              se = FALSE) +
+  theme(legend.position = "top")
+```
+
+Here's the syntax, results, and formula.
+
+```{r}
+mod4 <- lm(score ~ bty + sex + bty:sex,
+           data = d)
+
+get_regression_table(mod4)
+```
+
+$$
+\widehat{score}_i = 3.95 + .031(beauty_i) + -.184(male_i) + .080(beauty_i \times male_i)
+$$ The slope for female instructors is .031. The slope for male instructors is .031 + .080 = .111.
+
+```{r}
+get_regression_summaries(mod3) # parallel
+get_regression_summaries(mod4) # interactions
+```
+
+Do you think this is an important improvement?
+
+\-\--
+
+Predicting by age:
+
+```{r}
+mod4 <- lm(score ~ age,
+           data = d)
+
+get_regression_table(mod4)
+get_regression_summaries(mod4)
+
+mod4_preds <- get_regression_points(mod4)
+head(mod4_preds)
+```
+
+```{r}
+#| echo: false
+ggplot(d,
+       aes(x = age,
+           y = score)) +
+  geom_jitter(alpha = .3) +
+  geom_hline(yintercept = mean(d$score),
+             color = "blue") +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              color = "red",
+              linetype = "dashed") +
+  labs(x = "Age",
+       y = "Evaluation",
+       title = "Mean vs. regression line")
+
+```
+
+```{r}
+var_yhat4 <- mod1_preds |>
+  pull(residual) |> 
+  var()
+
+var_yhat4
+```
+
+```{r}
+1 - (var_yhat4 / var_y)
+```
+
+It looks like "age" can account for about `r round((1 - (var_yhat1 / var_y)) * 100, 1)` percent of the variance in the evaluation scores.
