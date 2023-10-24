@@ -1,0 +1,161 @@
+---
+title: "hw-chp-6"
+author: "Will Adams"
+format: html
+editor: visual
+embed-resources: true
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+# Set our ggplot theme from the outset
+theme_set(theme_light())
+# Read in the data 
+gender_employment <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/gender_employment.csv")
+
+# Glimpse at the data 
+glimpse(gender_employment)
+```
+
+```{r}
+#| message: false
+gender_employment |>
+  ggplot(aes(x = year, y = wage_percent_of_male)) +
+  geom_jitter(alpha = 0.1) + 
+  geom_smooth(method = "lm") + 
+  labs(title = "Women's earnings with respect to men's", 
+       y = "% of Men's Income", 
+       x = "Year")
+```
+
+## Question 1
+
+```{r}
+gender_employment <- gender_employment |> 
+  mutate(major_category = as.factor(major_category), 
+         major_category = relevel(major_category, 
+                                  ref = "Management, Business, and Financial"))
+```
+
+```{r}
+parallel_model <- lm(wage_percent_of_male ~ year + major_category,
+                     data = gender_employment)
+
+broom::tidy(parallel_model)
+```
+
+Each additional year results in a 0.192 percentage point increase in the female wage as a percentage of the male wage in the industry, which is then further adjusted by the major category.
+
+\$\$
+
+$$ \widehat{y}_i = -306.7183854 + 0.1922095(2015) + 3.3261175(1) $$
+
+a\) Women made 83.90987% of the male wage in Sales and Office occupations in 2015.
+
+$$\widehat{y}_i = -306.71838546 + 0.1922095(2016) + 6.0769722(1) $$
+
+b\) Women made 86.85294% of the male wage in Service occupations in 2016.
+
+## Question 2
+
+```{r}
+ggplot(gender_employment,
+       aes(x = year,
+           y = wage_percent_of_male,
+           group = major_category)) +
+  geom_smooth(method = "lm", 
+              se = FALSE) +
+  labs(title = "Women's earnings as % of men's in industry",
+       x = "Year",
+       y = "Wage % of Male")
+```
+
+No - the parallel trends assumption is not warranted since this graph shows how each major category has a difference slope over time.
+
+## Question 3
+
+```{r}
+interactive_model <- lm(wage_percent_of_male ~ year + major_category + year:major_category,
+                     data = gender_employment)
+
+broom::tidy(interactive_model)
+```
+
+$$ \widehat{y}_i = -1370.4719187 + 0.7202561(2016) + 1002.8532317(1) - 0.4946783(2016) $$
+
+a\) The estimate shows female wages as 87.14616% of male wages in Computer, Engineering, and Science industry for 2016.
+
+$$ \widehat{y}_i = -1370.4719187 + 0.7202561(2016) + 2137.6501474(1) - 1.0581075(2016) $$
+
+b\) The estimate shows female wages as 86.06981% of male wages in Services industry for 2016.
+
+This model estimates female wages as -0.78313 percentage points lower than the parallel model for the same year.
+
+## Question 4
+
+Using Occam's Razor "all other things being equal, simpler models are to be preferred over complex ones." Thus we should only favor the more complex interactive model if this additional complexity is warranted, if the parallel and interactive model create an essentially identical plot.
+
+## Question 5
+
+```{r}
+simple_fit <- lm(wage_percent_of_male ~ year,
+                     data = gender_employment)
+
+broom::tidy(simple_fit)
+```
+
+The model predicts that, starting from Year 0, each additional year results in a 0.2014713 percentage point increase in the female wage as a percentage of the male wage in the industry.
+
+```{r}
+gender_employment |>
+  select(year, wage_percent_of_male, percent_female) |>
+  cor(use = "complete.obs")
+```
+
+None of the variables appear to be very highly correlated to one another since the correlation coefficients between year and percent_of_male, year and percent_female are very low. Wage_percentage_of_male and percent_female appear to have slightly more of a positive relationship.
+
+```{r}
+multiple_fit <- lm(wage_percent_of_male ~ year + percent_female + year:percent_female,
+                     data = gender_employment)
+
+broom::tidy(multiple_fit)
+```
+
+$\widehat{y}_i = -801.114 + (0.4379222 * Year) + (10.63658 * Percent\_Female) - (0.005258887 * Year * Percent\_Female)$
+
+The positive year coefficient indicates an increasing wage percent of male over time; the positive percent female coefficient is interesting because, as we might expect, it suggests that a higher proportion of women in an occupation is associated with a higher wage percent of the same male occupation. The negative interaction term's coefficient of -0.005258887 indicates that the relationship between the wage percentage of male and "Year" only changes very minimally as "Percent_Female" changes.
+
+## Question 6
+
+R squared is the proportion of the spread / variation of the outcome variable y that is explained by our model, as fitted by our chosen x variables.
+
+```{r}
+library(broom)
+
+simple_glanced <- glance(simple_fit)
+simple_glanced$r.squared
+
+multiple_glanced <- glance(multiple_fit)
+multiple_glanced$r.squared
+```
+
+The multiple_glanced model has a higher r-squared. This suggests that the more complex model is a better predictor since it has increases our r-squared value by a large amount (0.01321338 versus 0.0005778711.
+
+## Warning Sign
+
+```{r}
+random_numbers <- rnorm(n = nrow(gender_employment), 
+                        mean = 0, 
+                        sd = 4)
+
+gender_employment$random_noise <- random_numbers
+
+# New model 
+random_fit <- lm(wage_percent_of_male ~ year + percent_female + random_noise, data = gender_employment)
+
+random_glanced <- glance(random_fit)
+random_glanced$r.squared
+```
+
+The random_glanced model improves our r-squared from 0.01321338 to 0.01379032...
