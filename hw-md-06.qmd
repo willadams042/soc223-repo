@@ -7,12 +7,14 @@ embed-resources: true
 ---
 
 ```{r}
+#| message: false
 library(tidyverse)
 
 twitch_data <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/twitchdata-update.csv")
 ```
 
 ```{r}
+#| message: false
 library(janitor)
 twitch_data <- clean_names(twitch_data)
 

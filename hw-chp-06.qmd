@@ -20,6 +20,7 @@ glimpse(gender_employment)
 
 ```{r}
 #| message: false
+#| warning: false
 gender_employment |>
   ggplot(aes(x = year, y = wage_percent_of_male)) +
   geom_jitter(alpha = 0.1) + 
