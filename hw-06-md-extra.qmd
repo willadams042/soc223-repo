@@ -1,0 +1,56 @@
+---
+title: "hw-md-06-extra"
+author: "Will Adams"
+format: html
+editor: visual
+embed-resources: true
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(moderndive)
+theme_set(theme_minimal())
+
+data(bikes, package = "bayesrules")
+glimpse(bikes)
+```
+
+## Question 0
+
+```{r}
+nrow(bikes)
+```
+
+The dataset has 500 rows. Each row represents a different day, from 2011-01-01 to 2012-12-31, although it skips some days. The highest observed ridership is 6946. The highest wind speed recorded was 34.00002 mph.
+
+## Question 1
+
+```{r}
+get_correlation(rides ~ temp_feel,
+                data = bikes) |> 
+  round(2)
+```
+
+The correlation between the number of rides and what the temperature feels like is 0.58.
+
+```{r}
+get_correlation(rides ~ windspeed,
+                data = bikes) |> 
+  round(2)
+```
+
+The correlation between the number of rides and what the temperature feels like is -0.19.
+
+## Question 2
+
+```{r}
+bikes <- bikes |> 
+  mutate(wind_kph = (windspeed)*(1.61))
+
+get_correlation(windspeed ~ wind_kph,
+                data = bikes) |> 
+  round(2)
+```
+
+The correlation between wind speed in mph and wind speed in kph is 1 since the values are simply adjusted by the 1.61 multiple we applied.
