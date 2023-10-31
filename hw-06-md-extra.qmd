@@ -53,4 +53,143 @@ get_correlation(windspeed ~ wind_kph,
   round(2)
 ```
 
-The correlation between wind speed in mph and wind speed in kph is 1 since the values are simply adjusted by the 1.61 multiple we applied.
+The correlation between wind speed in mph and wind speed in kph is 1 since the values are simply adjusted by the 1.61 factor we applied.
+
+## Question 3
+
+```{r}
+model1 <- lm(rides ~ windspeed,
+             data = bikes)
+get_regression_table(model1) |>
+  select(term, estimate)
+```
+
+```{r}
+model2 <- lm(rides ~ wind_kph,
+             data = bikes)
+get_regression_table(model2) |>
+    select(term, estimate)
+```
+
+In both models, the intercept is the same at 42.05.065. This is because the intercept shows us the estimated number of rides when wind speed is equal to zero. This will remain zero regardless of whether we measure wind speed in mph or kph.
+
+However, the slope coefficient is steeper when we measure wind speed in mph (-55.523 for the mph model compared to -34.486 for the kph model). This suggests that for every unit increase in wind speed in mph, there is a larger decrease in the number of rides when compared with a unit increase in wind speed in kph. This makes sense because of the 1.61 conversion factor we applied; 1.00 unit in mph equals 1.61 units in kph; thus a one unit increase in mph will have a larger decrease on the number of rides.
+
+## Question 4
+
+Using the kph model, when wind = 20kph:
+
+$\widehat{rides_i} = 4205.065 - 34.486( wind\_kph_i)$
+
+4205.065-34.486(20) = 3515.345 rides
+
+\-\--
+
+Using the mph model, when wind = 20mph:
+
+$\widehat{rides_i} = 4205.065 - 55.523( wind\_mph_i)$
+
+4205.065-55.523(20) = 3094.605 rides
+
+## Question 5
+
+```{r}
+bikes <- bikes |> 
+  mutate(temp_c = (temp_feel-32)*(5/9))
+
+model3 <- lm(rides ~ wind_kph + temp_c,
+             data = bikes)
+get_regression_table(model3) |>
+    select(term, estimate)
+```
+
+**Wind_kph:** For a 1-unit increase in wind speed in kph, the model expects a 19.842 decrease in rides, holding temperature constant.
+
+**Temp_c:** For a 1-unit increase in temperature in degrees Celcius, the model expects a 143.234 increase in rides, holding wind speed constant.
+
+**Intercept:** When wind speed in kph and temperature in degrees Celsius are both zero, the model expects 942.426 rides.
+
+$\widehat{rides_i} = 942.426 - 19.842(wind\_kph_i) +143.234(temp\_c_i)$
+
+## Question 6
+
+```{r}
+pred_df <- tibble(
+  situation = 1:3,
+  temp_c = c(25, 15, 10),
+  wind_kph = c(15, 5, 40)
+)
+
+predict(model3,
+        newdata = pred_df)
+```
+
+**Situation 1:** 4225.647 rides
+
+**Situation 2:** 2991.728 rides
+
+**Situation 3:** 1581.078 rides
+
+## Question 7
+
+```{r}
+bikes<- bikes |> 
+  mutate(weekend = as.factor(weekend))
+
+model4 <- lm(rides ~ wind_kph + temp_c + weekend,
+             data = bikes)
+get_regression_table(model4) |>
+    select(term, estimate)
+```
+
+$\widehat{rides_i} = 1214.803 - 20.386(wind\_kph_i) +140.339(temp\_c_i) -713.575(weekend\_y/n_i)$
+
+**Weekend:** The weekend coefficient represents the expected change in number of rides when comparing a weekend to a weekday, holding wind speed and temperature constant. When it is the weekend, the model will use (1) and when it is not the weekend, the model will use (0). This means that when it is the weekend, the model expects a 713.575 decrease in rides, holding temperature and wind speed in kph constant. This suggests there are more rides during the week.
+
+## Question 8
+
+```{r}
+pred_df2 <- tibble(
+  situation = 1,
+  temp_c = mean(bikes$temp_c),
+  wind_kph = mean(bikes$wind_kph),
+  weekend = factor(TRUE, levels = c("TRUE", "FALSE"))
+)
+
+predict(model4,
+        newdata = pred_df2)
+
+pred_df3 <- tibble(
+  situation = 2,
+  temp_c = mean(bikes$temp_c),
+  wind_kph = mean(bikes$wind_kph),
+  weekend = factor(FALSE, levels = c("TRUE", "FALSE"))
+)
+
+predict(model4,
+        newdata = pred_df3)
+```
+
+Expected Rides on Weekend: 2969.867
+
+Expected Rides on Weekday: 3683.442
+
+```{r}
+#check
+wind_avg <- mean(bikes$wind_kph)
+temp_avg <- mean(bikes$temp_c)
+
+print(wind_avg)
+print(temp_avg)
+```
+
+$\widehat{rides_i} = 1214.803 - 20.386(20.96062) +140.339(20.63539) -713.575(weekend\_y/n_i)$
+
+## Question 9
+
+```{r}
+predicted_bikesrides <- predict(model4)
+residuals <- bikes$rides - predicted_bikesrides
+```
+
+After inspecting the max residual (-3490.3475 - from row 439 in the original bikes data set), it appears that 29th Oct, 2012 is the date for which the model is most wrong about predicted ridership. The model appears to have been so wrong about this day because there was a much lower than expected number of rides (20) than the other range of rides in the dataset, likely since this was the day Hurricane Sandy hit the US east coast.
