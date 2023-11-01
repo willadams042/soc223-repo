@@ -149,39 +149,19 @@ $\widehat{rides_i} = 1214.803 - 20.386(wind\_kph_i) +140.339(temp\_c_i) -713.575
 ## Question 8
 
 ```{r}
-pred_df2 <- tibble(
-  situation = 1,
-  temp_c = mean(bikes$temp_c),
-  wind_kph = mean(bikes$wind_kph),
-  weekend = factor(TRUE, levels = c("TRUE", "FALSE"))
-)
+library(ggeffects)
+predictions <- ggpredict(model4,
+                         terms = c("weekend"),
+                         ci_level = NA)
 
-predict(model4,
-        newdata = pred_df2)
-
-pred_df3 <- tibble(
-  situation = 2,
-  temp_c = mean(bikes$temp_c),
-  wind_kph = mean(bikes$wind_kph),
-  weekend = factor(FALSE, levels = c("TRUE", "FALSE"))
-)
-
-predict(model4,
-        newdata = pred_df3)
+predictions
 ```
 
-Expected Rides on Weekend: 2969.867
+Expected Rides on Weekend: 2969.87
 
-Expected Rides on Weekday: 3683.442
+Expected Rides on Weekday: 3683.44
 
-```{r}
-#check
-wind_avg <- mean(bikes$wind_kph)
-temp_avg <- mean(bikes$temp_c)
-
-print(wind_avg)
-print(temp_avg)
-```
+Subbing in avg wind and avg temp:
 
 $\widehat{rides_i} = 1214.803 - 20.386(20.96062) +140.339(20.63539) -713.575(weekend\_y/n_i)$
 

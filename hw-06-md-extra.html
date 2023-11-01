@@ -3340,56 +3340,35 @@ $ rides       &lt;int&gt; 654, 1229, 1454, 1518, 1362, 891, 1280, 1220, 1137, 13
 <section id="question-8" class="level2">
 <h2 class="anchored" data-anchor-id="question-8">Question 8</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>pred_df2 <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">situation =</span> <span class="dv">1</span>,</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">temp_c =</span> <span class="fu">mean</span>(bikes<span class="sc">$</span>temp_c),</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">wind_kph =</span> <span class="fu">mean</span>(bikes<span class="sc">$</span>wind_kph),</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weekend =</span> <span class="fu">factor</span>(<span class="cn">TRUE</span>, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;TRUE&quot;</span>, <span class="st">&quot;FALSE&quot;</span>))</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="fu">predict</span>(model4,</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">newdata =</span> pred_df2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggeffects)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>predictions <span class="ot">&lt;-</span> <span class="fu">ggpredict</span>(model4,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">terms =</span> <span class="fu">c</span>(<span class="st">&quot;weekend&quot;</span>),</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">ci_level =</span> <span class="cn">NA</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>predictions</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>       1 
-2969.867 </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>pred_df3 <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">situation =</span> <span class="dv">2</span>,</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">temp_c =</span> <span class="fu">mean</span>(bikes<span class="sc">$</span>temp_c),</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">wind_kph =</span> <span class="fu">mean</span>(bikes<span class="sc">$</span>wind_kph),</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weekend =</span> <span class="fu">factor</span>(<span class="cn">FALSE</span>, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;TRUE&quot;</span>, <span class="st">&quot;FALSE&quot;</span>))</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="fu">predict</span>(model4,</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">newdata =</span> pred_df3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>       1 
-3683.442 </code></pre>
+<pre><code># Predicted values of rides
+
+weekend | Predicted
+-------------------
+FALSE   |   3683.44
+TRUE    |   2969.87
+
+Adjusted for:
+* wind_kph = 20.96
+*   temp_c = 20.64</code></pre>
 </div>
 </div>
-<p>Expected Rides on Weekend: 2969.867</p>
-<p>Expected Rides on Weekday: 3683.442</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#check</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>wind_avg <span class="ot">&lt;-</span> <span class="fu">mean</span>(bikes<span class="sc">$</span>wind_kph)</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>temp_avg <span class="ot">&lt;-</span> <span class="fu">mean</span>(bikes<span class="sc">$</span>temp_c)</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(wind_avg)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 20.96062</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(temp_avg)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 20.63539</code></pre>
-</div>
-</div>
+<p>Expected Rides on Weekend: 2969.87</p>
+<p>Expected Rides on Weekday: 3683.44</p>
+<p>Subbing in avg wind and avg temp:</p>
 <p><span class="math inline">\(\widehat{rides_i} = 1214.803 - 20.386(20.96062) +140.339(20.63539) -713.575(weekend\_y/n_i)\)</span></p>
 </section>
 <section id="question-9" class="level2">
 <h2 class="anchored" data-anchor-id="question-9">Question 9</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>predicted_bikesrides <span class="ot">&lt;-</span> <span class="fu">predict</span>(model4)</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>residuals <span class="ot">&lt;-</span> bikes<span class="sc">$</span>rides <span class="sc">-</span> predicted_bikesrides</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>predicted_bikesrides <span class="ot">&lt;-</span> <span class="fu">predict</span>(model4)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>residuals <span class="ot">&lt;-</span> bikes<span class="sc">$</span>rides <span class="sc">-</span> predicted_bikesrides</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>After inspecting the max residual (-3490.3475 - from row 439 in the original bikes data set), it appears that 29th Oct, 2012 is the date for which the model is most wrong about predicted ridership. The model appears to have been so wrong about this day because there was a much lower than expected number of rides (20) than the other range of rides in the dataset, likely since this was the day Hurricane Sandy hit the US east coast.</p>
 </section>
