@@ -1,0 +1,24 @@
+---
+title: "project-idea"
+author: "Will Adams"
+format: html
+editor: visual
+---
+
+## Final Project
+
+1.  [Overview]{.underline}
+
+I would like to explore **Sports and Entertainment Consumption** in the United States or Europe. The study will aim to better understand the concept of modern fandom and how this might influence soccer properties to thinking about implementing innovation and technology. I hope to be able to understand key trends by segmenting demographics and predicting how different sections of consumer preferences will evolve for streaming, sports documentaries, video gaming, live entertainment, and digital collectibles, etc.
+
+2.  [Datasets]{.underline}
+
+There are a few datasets I am interested in looking further into and discussing with Professor Vaisey. Some of these have reports published from them (so perhaps I could look into them further) and some are large datasets that I would like to see if Duke might have access to:
+
+https://nielsensports.com/nielsen-fan-insights/
+
+https://www.gwi.com/sports
+
+https://www.sportsilab.com/fan-intelligence
+
+https://www.statista.com/outlook/dmo/app/entertainment/worldwide
