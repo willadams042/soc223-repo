@@ -3,6 +3,7 @@ title: "project-idea"
 author: "Will Adams"
 format: html
 editor: visual
+embed-resources: true
 ---
 
 ## Final Project
