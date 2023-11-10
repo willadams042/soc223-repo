@@ -1,0 +1,103 @@
+---
+title: "hw-md-7"
+author: "Will Adams"
+format: html
+editor: visual
+embed-resources: true
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(here)
+library(moderndive)
+theme_set(theme_minimal())
+
+nobel_winners <- read_csv("https://raw.githubusercontent.com/vaiseys/dav-course/main/Data/nobel_winners.csv")
+```
+
+```{r}
+nobel_winners_flt <- nobel_winners |>
+  filter(category != "Peace") |>
+  mutate(is_us = if_else(birth_country == "United States of America", 1, 0))
+```
+
+```{r}
+true_prop <- nobel_winners_flt |>
+  group_by(is_us) |>
+  summarise(prop = n()/nrow(nobel_winners_flt))
+
+ggplot() + 
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1)) + 
+  geom_vline(xintercept = true_prop[2,2][[1]], linetype = "dashed")  + 
+  labs(x = "Proportion")
+```
+
+```{r}
+set.seed(33)
+# Random sample 
+our_sample <- sample_n(nobel_winners_flt, 
+                       size = 25, 
+                       replace = F)
+
+sample_prop <- our_sample |>
+  group_by(is_us) |>
+  summarise(prop = n()/nrow(our_sample))
+
+# How does our proportion look like? 
+ggplot() + 
+  coord_cartesian(xlim = c(0,1), ylim = c(0,1)) + 
+  geom_vline(xintercept = true_prop[2,2][[1]], linetype = "dashed")  + 
+  geom_vline(xintercept = sample_prop[2,2][[1]], linetype = "dotted", col = "red") +
+  labs(x = "Proportion")
+```
+
+## Question 1
+
+The population is the collection of individuals who have won a Nobel Prize. The sampling frame is dataset "nobel_winners_flt" which has been filtered to exclude individuals who received the Nobel Peace Prize. The black line is the **true** proportion of US-born Nobel prize winners in the population (population proportion). The red line is the **observed** proportion of US-born Nobel prize winners in the random sample of 25 Nobel winners (sampling proportion).
+
+## Question 2
+
+```{r}
+set.seed(33)
+
+sample_25 <- nobel_winners_flt |>
+  rep_sample_n(size = 25, 
+               reps = 50)
+
+sample_graph <-sample_25 |>
+  group_by(replicate) |>
+  summarise(prop = sum(is_us)/25)
+
+sample_graph |>
+  ggplot(aes(x = prop)) +
+    geom_histogram(binwidth = 0.05, color = "white") +
+    geom_vline(xintercept = mean(nobel_winners_flt$is_us), linetype = "dashed") + 
+    geom_vline(xintercept = mean(sample_graph$prop), linetype = "dashed", color = "red") +
+  labs(x = "Proportion", y = "Frequency", title = "Sampling Distribution of Proportions") +
+  theme_minimal()
+```
+
+## Question 3
+
+```{r}
+set.seed(33)
+
+sample_100 <- nobel_winners_flt |>
+  rep_sample_n(size = 100, 
+               reps = 50)
+
+sample_graph_100 <-sample_100 |>
+  group_by(replicate) |>
+  summarise(prop = sum(is_us)/100)
+
+sample_graph_100 |>
+  ggplot(aes(x = prop)) +
+    geom_histogram(binwidth = 0.05, color = "white") +
+    geom_vline(xintercept = mean(nobel_winners_flt$is_us), linetype = "dashed") + 
+    geom_vline(xintercept = mean(sample_graph_100$prop), linetype = "dashed", color = "red") +
+  labs(x = "Proportion", y = "Frequency", title = "Sampling Distribution of Proportions") +
+  theme_minimal()
+```
+
+The distribution of the 25-winner sample has much more variation given it is using a smaller sample.
