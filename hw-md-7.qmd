@@ -74,7 +74,9 @@ sample_graph |>
     geom_histogram(binwidth = 0.05, color = "white") +
     geom_vline(xintercept = mean(nobel_winners_flt$is_us), linetype = "dashed") + 
     geom_vline(xintercept = mean(sample_graph$prop), linetype = "dashed", color = "red") +
-  labs(x = "Proportion", y = "Frequency", title = "Sampling Distribution of Proportions") +
+  labs(x = "Proportion of 25 nobel winners that were US-born", 
+       y = "Frequency", 
+       title = "Sampling Distribution of 50 proportions") +
   theme_minimal()
 ```
 
@@ -96,8 +98,59 @@ sample_graph_100 |>
     geom_histogram(binwidth = 0.05, color = "white") +
     geom_vline(xintercept = mean(nobel_winners_flt$is_us), linetype = "dashed") + 
     geom_vline(xintercept = mean(sample_graph_100$prop), linetype = "dashed", color = "red") +
-  labs(x = "Proportion", y = "Frequency", title = "Sampling Distribution of Proportions") +
+  labs(x = "Proportion of 100 nobel winners that were US-born", 
+       y = "Frequency", 
+       title = "Sampling Distribution of 50 Proportions") +
   theme_minimal()
 ```
 
-The distribution of the 25-winner sample has much more variation given it is using a smaller sample.
+The distribution of the 25-winner sample has much more variation given it is using a smaller sample. The larger sample we take, the more confidence we have in our estimates since it is more representative of the larger population.
+
+## Question 4
+
+```{r}
+sample_graph |>
+  summarize(sd = sd(prop))
+
+sample_graph_100 |>
+  summarize(sd = sd(prop))
+
+
+```
+
+The standard deviation for the sample of 25 is larger than for the sample of 100 (0.105688 \> 0.04874591), which supports the argument above. It suggests that as our sample size increases, the variability in our estimates decreases, since larger samples give us more information about the larger population.
+
+## Question 5
+
+```{r}
+#quantify gender
+nobel_winners_flt_gender<- nobel_winners_flt |>
+  mutate(sex = if_else(gender == "Female", 1, 0)) 
+```
+
+```{r}
+#sample size 25
+set.seed(33)
+
+sample_100_g <- nobel_winners_flt_gender |>
+  rep_sample_n(size = 100, 
+               reps = 50)
+
+sample_graph_100g <-sample_100_g |>
+  group_by(replicate) |>
+  summarise(prop = sum(sex)/100)
+
+sample_graph_100g |>
+  ggplot(aes(x = prop)) +
+    geom_histogram(binwidth = 0.05, color = "white") +
+    geom_vline(xintercept = mean(nobel_winners_flt_gender$sex), linetype = "dashed") + 
+    geom_vline(xintercept = mean(sample_graph_100g$prop), linetype = "dashed", color = "red") +
+  labs(x = "Proportion of 100 nobel winners that were female", 
+       y = "Frequency", 
+       title = "Sampling Distribution of 50 Proportions") +
+  theme_minimal()
+```
+
+## Question 6
+
+The Central Limit Theorem is the concept that no matter the shape of the original population distribution, distribution of the average of samples of the population will be approximately normally distributed. As the sample size increases, the distribution of averages becomes narrower and the closer the mean of the samples gets to the true mean of the population. In practical terms, the larger the sample groups of rabbits that you weigh, the closer the average of those groups will be to the true average of the overall population of rabbits and hence the more confident your estimates become.
