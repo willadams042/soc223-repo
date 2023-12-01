@@ -1,0 +1,183 @@
+---
+title: "Final Project"
+author: "Will Adams"
+format: html
+editor: visual
+embed-resources: true
+echo: false
+---
+
+## Predictive Factors of Player Market Value in World Football
+
+```{r}
+#| message: false
+library(tidyverse)
+library(moderndive)
+library(worldfootballR)
+library(skimr)
+options(scipen=999)
+```
+
+```{r}
+#| message: false
+
+#https://www.kaggle.com/datasets/sanjitva/predicting-soccer-player-transfer-values/data
+soccer_players <- read_csv("/Users/williamadams/desktop/soccer_dataset_21.csv")
+
+soccer_players_flt <- soccer_players |>
+  select(Player, Club, Age, Position, Nation, Value, League, 
+         `Gls/90 (20/21)`, `Touches (20/21)`) |>
+  drop_na()
+```
+
+## 1. Introduction
+
+The business model of professional European football has reached a point of reckoning. The hypercompetitive open-league system with no salary cap has resulted in an environment where profit generation is not a realistic option. Rather, the increased financialization of European football has seen clubs continue to overspend their abilities in a race-to-the-bottom for talent. This has resulted in the exponential growth of player spending, which reached more than £6.5bn in the summer 2023 transfer window.
+
+This study aims to better understand what factors influence market value in players to help clubs move towards more sustainable transfer models. By analyzing what factors contribute towards player market value, clubs can be more prudent in their player trading and academy development philosophies. The project investigates whether factors such as nationality, age, and position are related to player market value.
+
+To address this question, I used a data set from Kaggle that scraped information on global soccer players from Transfermarkt and fbref.com. The data was last updated on September 2nd, 2021. Each case in the data set is a different player. Here is a snapshot of 5 randomly chosen rows of the data set being used:
+
+```{r}
+sample_rows <- soccer_players_flt |>
+  sample_n(5)
+
+print(sample_rows)
+```
+
+## 2. Exploratory data analysis
+
+```{r}
+soccer_players_5 <- soccer_players_flt |>
+  group_by(Nation) |>
+  summarise(PlayerCount = n()) |>
+  filter(PlayerCount > 5)
+
+soccer_players_5 |>
+  ggplot(aes(x = reorder(Nation, desc(PlayerCount)), y = PlayerCount)) +
+  geom_bar(stat = "identity", fill = "navy") +
+  labs(caption = "Figure 1: Soccer players by country in Top 5 Leagues (>5)",
+       x = "Nation",
+       y = "Number of Players") +
+  theme_minimal() +
+  coord_flip()
+```
+
+```{r, fig.height=8.5, fig.width=6}
+
+soccer_players_flt |>
+  ggplot(aes(x = reorder(Nation, desc(Value)), y = Value)) +
+  geom_boxplot(alpha = 0.3, color = "navy") +
+  labs(x = "Value",
+       y = "Nation") +
+  coord_flip()
+```
+
+The original sample was 2,075 players. I filtered the dataset to include certain categories that I thought it would be interesting to analyze. Since some of the players had missing values for the factors selected, I dropped these rows from consideration. I am not sure why these values were missing, so cannot comment on the impact dropping these results might have on my results.
+
+After cleaning the data, my total sample size was 1,910 players. Looking at the distribution of player values, it was positively skewed and thus I applied a logarithmic transformation. There was also a potential outlier at 150 million, which will be something important to consider throughout our analysis.
+
+```{r}
+soccer_players_flt |>
+  ggplot(aes(x = Value)) +
+  geom_density(fill = "navy", color = "pink", alpha = 0.7) +
+  labs(caption = "Figure 1: Density Plot of Player Values",
+       x = "Player Value",
+       y = "Density") +
+  theme_minimal()
+```
+
+```{r}
+soccer_players_flt <- soccer_players_flt |>
+  mutate(log_value = log(Value))
+
+soccer_players_flt |>
+  ggplot(aes(x = log(Value))) +
+  geom_bar(width = 0.1, color = "navy", alpha = 0.7) +
+  labs(caption = "Figure 3: Distribution of Log-Transformed Player Values",
+       x = "Log(Player Value)",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+In Figure 3, I generated a scatterplot to see the overall relationship between the numerical outcome variable Player Value and the numerical explanatory variable age. As the age of players increased, there was an associated increase in Player Value until the age of 30, when player value appeared to decrease. This relationship is represented by a correlation coefficient of XXXX.
+
+```{r}
+soccer_players_flt |>
+  ggplot(aes(x = Age, y = log_value)) +
+  geom_point(alpha = 0.4, color = "navy") +
+  geom_smooth(method = "gam", se = FALSE, color = "pink") +
+  labs(caption = "Figure 4: Distribution of Age and Logged Player Value",
+       x = "Age",
+       y = "Logged Player Value") +
+  theme_minimal()
+```
+
+```{r}
+soccer_players_flt |>
+  ggplot(aes(x = `Touches (20/21)`, y = log_value)) +
+  geom_jitter(alpha = 0.4, color = "navy") +
+  geom_smooth(method = "gam", se = FALSE, color = "pink") +
+  labs(caption = "Figure 5: Distribution of Touches (20/21) and Logged Player Value",
+       x = "Touches (20/21)",
+       y = "Logged Player Value") +
+  theme_minimal()
+```
+
+```{r}
+soccer_players_flt |>
+  ggplot(aes(x = Position, y = log_value, fill = Position)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(caption = "Figure 6: Distribution of Logged Player Values by Position",
+       x = "Position",
+       y = "Logged Player Value") +
+  scale_fill_manual(values = c(
+    "attack" = "navy", "midfield" = "navy", "Defender" = "navy", "Goalkeeper" = "navy")) +
+  theme_minimal()
+```
+
+```{r}
+soccer_players_flt |>
+  ggplot(aes(x = reorder(League, log_value), y = log_value, fill = League)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(caption = "Figure 7: Distribution of Logged Player Values by League",
+       x = "League",
+       y = "Logged Player Value") +
+  scale_fill_manual(values = c(
+    "Premier League" = "navy", "Bundesliga" = "navy", 
+    "Serie A" = "navy", "Ligue 1" = "navy", "La Liga" = "navy")) +
+  theme_minimal()
+```
+
+```{r}
+soccer_players_flt |>
+  ggplot(aes(x = `Touches (20/21)`, y = log_value, fill = League)) +
+  geom_jitter(alpha = 0.4, color = "navy") +
+  geom_smooth(method = "lm", se = FALSE, color = "pink") +
+  labs(caption = "Figure 5: Distribution of Touches (20/21) and Logged Player Value",
+       x = "Touches (20/21)",
+       y = "Logged Player Value") +
+  theme_minimal()
+```
+
+## 3. Multiple linear regression
+
+### 3.1 Methods
+
+### 3.2 Model Results
+
+### 3.3 Interpreting the regression table
+
+### 3.4 Inference for multiple regression
+
+### 3.5 Residual analysis
+
+## 4. Discussion
+
+### 4.1 Conclusions
+
+### 4.2 Limitations
+
+### 4.3 Further Questions
+
+## 5. Citations and References
