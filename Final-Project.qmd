@@ -9,17 +9,16 @@ echo: false
 
 ## Predictive Factors of Player Market Value in World Football
 
-```{r}
-#| message: false
+```{r, message = FALSE}
 library(tidyverse)
 library(moderndive)
 library(worldfootballR)
 library(skimr)
+library(broom)
 options(scipen=999)
 ```
 
-```{r}
-#| message: false
+```{r, message = FALSE}
 
 #https://www.kaggle.com/datasets/sanjitva/predicting-soccer-player-transfer-values/data
 soccer_players <- read_csv("/Users/williamadams/desktop/soccer_dataset_21.csv")
@@ -48,6 +47,16 @@ print(sample_rows)
 ## 2. Exploratory data analysis
 
 ```{r}
+soccer_players_flt |>
+  select(Age, Value, `Gls/90 (20/21)`, `Touches (20/21)`) |>
+  summary()
+```
+
+The original sample was 2,075 players. I filtered the dataset to include certain categories that I thought it would be interesting to analyze. Since some of the players had missing values for the factors selected, I dropped these rows from consideration. I am not sure why these values were missing, so cannot comment on the impact dropping these results might have on my results.
+
+After cleaning the data, my total sample size was 1,910 players. The summary shows that within this filtered dataset, average age is 27.74, average player value is 11,688,385 EUR, average Goals/90 in 2020-21 was 0.1228, and average touches in 2020-21 was 1040.9. I then explored players by nation (Fig 1), where I observed the five countries with the most players were: Spain (274), France (258), Germany (174), England (176), and Italy (152).
+
+```{r}
 soccer_players_5 <- soccer_players_flt |>
   group_by(Nation) |>
   summarise(PlayerCount = n()) |>
@@ -63,36 +72,24 @@ soccer_players_5 |>
   coord_flip()
 ```
 
-```{r, fig.height=8.5, fig.width=6}
-
-soccer_players_flt |>
-  ggplot(aes(x = reorder(Nation, desc(Value)), y = Value)) +
-  geom_boxplot(alpha = 0.3, color = "navy") +
-  labs(x = "Value",
-       y = "Nation") +
-  coord_flip()
-```
-
-The original sample was 2,075 players. I filtered the dataset to include certain categories that I thought it would be interesting to analyze. Since some of the players had missing values for the factors selected, I dropped these rows from consideration. I am not sure why these values were missing, so cannot comment on the impact dropping these results might have on my results.
-
-After cleaning the data, my total sample size was 1,910 players. Looking at the distribution of player values, it was positively skewed and thus I applied a logarithmic transformation. There was also a potential outlier at 150 million, which will be something important to consider throughout our analysis.
+Looking at the distribution of player values (Fig 2), it was positively skewed and thus I applied a logarithmic transformation (Fig 3). There was also a potential outlier at 150 million, which is something important to consider throughout my analysis.
 
 ```{r}
 soccer_players_flt |>
   ggplot(aes(x = Value)) +
   geom_density(fill = "navy", color = "pink", alpha = 0.7) +
-  labs(caption = "Figure 1: Density Plot of Player Values",
+  labs(caption = "Figure 2: Density Plot of Player Values",
        x = "Player Value",
        y = "Density") +
   theme_minimal()
 ```
 
-```{r}
+```{r, warning = FALSE}
 soccer_players_flt <- soccer_players_flt |>
   mutate(log_value = log(Value))
 
 soccer_players_flt |>
-  ggplot(aes(x = log(Value))) +
+  ggplot(aes(x = log_value)) +
   geom_bar(width = 0.1, color = "navy", alpha = 0.7) +
   labs(caption = "Figure 3: Distribution of Log-Transformed Player Values",
        x = "Log(Player Value)",
@@ -100,9 +97,9 @@ soccer_players_flt |>
   theme_minimal()
 ```
 
-In Figure 3, I generated a scatterplot to see the overall relationship between the numerical outcome variable Player Value and the numerical explanatory variable age. As the age of players increased, there was an associated increase in Player Value until the age of 30, when player value appeared to decrease. This relationship is represented by a correlation coefficient of XXXX.
+In Figure 4, I generated a scatterplot to see the overall relationship between the numerical outcome variable Player Value and the numerical explanatory variable age. As the age of players increased, there was an associated increase in Player Value until the age of \~25, after which player value appeared to decrease. This relationship is represented by a correlation coefficient of -0.3.
 
-```{r}
+```{r, message = FALSE}
 soccer_players_flt |>
   ggplot(aes(x = Age, y = log_value)) +
   geom_point(alpha = 0.4, color = "navy") +
@@ -114,8 +111,16 @@ soccer_players_flt |>
 ```
 
 ```{r}
+get_correlation(log_value ~ Age,
+                data = soccer_players_flt) |>
+  round(2)
+```
+
+Figure 5 shows the relationship between the numerical outcome variable Player Value and another numerical explanatory variable Goals per 90 mins (20/21). As the number of goals per 90 minutes increased, there was an associated increase in Player Value. This relationship is represented by a correlation coefficient of 0.28.
+
+```{r, message = FALSE}
 soccer_players_flt |>
-  ggplot(aes(x = `Touches (20/21)`, y = log_value)) +
+  ggplot(aes(x = `Gls/90 (20/21)`, y = log_value)) +
   geom_jitter(alpha = 0.4, color = "navy") +
   geom_smooth(method = "gam", se = FALSE, color = "pink") +
   labs(caption = "Figure 5: Distribution of Touches (20/21) and Logged Player Value",
@@ -125,22 +130,19 @@ soccer_players_flt |>
 ```
 
 ```{r}
-soccer_players_flt |>
-  ggplot(aes(x = Position, y = log_value, fill = Position)) +
-  geom_boxplot(alpha = 0.7) +
-  labs(caption = "Figure 6: Distribution of Logged Player Values by Position",
-       x = "Position",
-       y = "Logged Player Value") +
-  scale_fill_manual(values = c(
-    "attack" = "navy", "midfield" = "navy", "Defender" = "navy", "Goalkeeper" = "navy")) +
-  theme_minimal()
+get_correlation(log_value ~ `Gls/90 (20/21)`,
+                data = soccer_players_flt) |>
+  round(2)
 ```
 
-```{r}
+Figure 6 shows the relationship between the numerical outcome variable Player Value and the categorical explanatory variable League. Player value looks to be the greatest for the Premier League with a large gap down to Series A next, then La Liga, the Bundesliga, and finally Ligue 1. There is a large outlier for Ligue 1 (Kylian Mbappe), whilst the Premier League, the Bundesliga, and Series A each have a number of players who are low outliers.
+
+```{r, message = FALSE}
 soccer_players_flt |>
   ggplot(aes(x = reorder(League, log_value), y = log_value, fill = League)) +
   geom_boxplot(alpha = 0.7) +
-  labs(caption = "Figure 7: Distribution of Logged Player Values by League",
+  geom_point(alpha = 0.01) +
+  labs(caption = "Figure 6: Distribution of Logged Player Values by League",
        x = "League",
        y = "Logged Player Value") +
   scale_fill_manual(values = c(
@@ -149,13 +151,26 @@ soccer_players_flt |>
   theme_minimal()
 ```
 
-```{r}
+Bringing these together in Figures 8 and 9, I created two scatterplots exploring the relationship between all three variables. The graph simulates an interaction model where each regression line corresponds to each league with slightly different slopes. However, given the slopes are quite similar and the regression lines are quite parallel across both models, we do not warrant exploring a more complex interaction model and so will choose to simpler "parallel slopes" method in our analysis.
+
+```{r, message = FALSE}
 soccer_players_flt |>
-  ggplot(aes(x = `Touches (20/21)`, y = log_value, fill = League)) +
+  ggplot(aes(x = `Gls/90 (20/21)`, y = log_value, fill = League)) +
   geom_jitter(alpha = 0.4, color = "navy") +
   geom_smooth(method = "lm", se = FALSE, color = "pink") +
-  labs(caption = "Figure 5: Distribution of Touches (20/21) and Logged Player Value",
-       x = "Touches (20/21)",
+  labs(caption = "Figure 7: Distribution of Goals/90 (20/21) and Log Player Value by League",
+       x = "Goals/90 (20/21)",
+       y = "Logged Player Value") +
+  theme_minimal()
+```
+
+```{r, message = FALSE}
+soccer_players_flt |>
+  ggplot(aes(x = Age, y = log_value, fill = League)) +
+  geom_jitter(alpha = 0.4, color = "navy") +
+  geom_smooth(method = "lm", se = FALSE, color = "pink") +
+  labs(caption = "Figure 8: Distribution of Age and Logged Player Value by League",
+       x = "Age",
        y = "Logged Player Value") +
   theme_minimal()
 ```
@@ -164,20 +179,200 @@ soccer_players_flt |>
 
 ### 3.1 Methods
 
+I chose the components of my multiple linear regression as the following:
+
+-   Outcome variable $y$ = Log Player Value
+
+-   Numerical explanatory variable $x_1$ = Age
+
+-   Numerical explanatory variable $x_2$ = Goals/90 min
+
+-   Categorical explanatory variable $x_3$ = League
+
+The unit of analysis is the log of player value in EUR. I favored the "parellel slopes" method after the results of the EDA.
+
 ### 3.2 Model Results
+
+```{r}
+soccer_players_flt <- soccer_players_flt |> 
+  mutate(League = as.factor(League), 
+         League = relevel(League, ref = "Ligue 1"))
+
+parallel_model <- lm(log_value ~ Age + `Gls/90 (20/21)` + League,
+                     data = soccer_players_flt)
+
+broom::tidy(parallel_model)
+
+confidence_intervals <- confint(parallel_model)
+print(confidence_intervals)
+```
 
 ### 3.3 Interpreting the regression table
 
-### 3.4 Inference for multiple regression
+The regression equation for Log Player Value is as follows:
+
+$\widehat{log player value_i} = 17.55548400 - 0.09526848(Age_i) + 2.02891108(Goals/90_i)$
+
+$+ 0.04686324 ⋅ 1_{is Bundesliga}(x_2) + 0.37350811 ⋅ 1_{is La Liga}(x_2)$
+
+$+ 0.97924822 ⋅ 1_{is Premier League}(x_2) + 0.32615866 ⋅ 1_{is Serie A}(x_2)$
+
+-   The intercept (17.55548400) represents the Player Value when players are aged 0, score 0 goals/ 90 minutes, and play in Ligue 1 (Table 2).
+
+-   The estimate for the slope for age (-0.09526848) is the associated change in average Player Value with each unit increase in age. Based on this estimate, for every extra year old a player is, there was an associted decrease in log Player Value of on average 0.09526848 points.
+
+-   The estimate for the slope for Goals /90 min for 2020-21 (2.02891108) is the associated change in average Player Value with each unit increase in goals/90 minutes in 2020-21. Based on this estimate, for every extra 1 goal/90 minute a player scores, there was an associated increase log player value of on average 2.02891108 points.
+
+-   The estimate for LeagueBundesliga (0.04686324), LeagueLa Liga (0.37350811), LeagueSerie A (0.32615866), and LeaguePremier League (0.97924822) are the offsets in intercept relative to the baseline group\'s, Ligue 1's, intercept (Table 2). In other words, on average Bundesliga players are valued 0.04686324 points higher than Ligue 1 players, La Liga players are valued 0.37350811 points higher than Ligue 1 players, Serie A players are valued 0.32615866 points higher than Ligue 1 players, and Premier League players are valued 0.97924822 points higher than Ligue 1 players.
+
+Thus the five regression lines are:
+
+$\widehat{log player value Ligue 1_i} = 17.55548400 - 0.09526848(Age_i) + 2.02891108(Goals/90_i)$
+
+$\widehat{log player value Bundesliga_i} = 17.60235 - 0.09526848(Age_i) + 2.02891108(Goals/90_i)$
+
+$\widehat{log player value La Liga_i} = 17.92899 - 0.09526848(Age_i) + 2.02891108(Goals/90_i)$
+
+$\widehat{log player value Serie A_i} = 18.53473 - 0.09526848(Age_i) + 2.02891108(Goals/90_i)$
+
+$\widehat{log player value Premier League_i} = 17.88164 - 0.09526848(Age_i) + 2.02891108(Goals/90_i)$
+
+### 3.4 Inference and hypothesis testing
+
+Using the output of my regression table I decided to test three different null hypotheses:
+
+1\) **Null Hypothesis (H0):** There is no relationship between Age and Logged Player Value at the population level (all population slopes are zero).
+
+**Alternative Hypothesis (HA):** There is a relationship between age and logged player value at the population level.
+
+$H_0: \beta_{\text{Age}} = 0$
+$H_a: \beta_{\text{Age}} \neq 0$
+
+There appears to be a negative relationship between age and player value as represented by -0.09526848 coefficient. Table 2 shows us that: (1) the 95% confidence interval for the population slope Age is (1.7569667, -0.08361093) negative on both tails; (2) the p-value $p$ \< 0.001 is very small suggesting it is statistically significant (p-value \<0.05), so we reject the null hypothesis $H_0$ that there is no relationship between player value and age in favor of the alternative hypothesis $H_a$ that there is a negative relationship.
+
+This means that taking into account potential sampling variation in results, the relationship appears to be negative.
+
+2\) **Null Hypothesis (H0):** There is no relationship between goals/90 mins and Logged Player Value at the population level (all population slopes are zero).
+
+**Alternative Hypothesis (HA):** There is a relationship between goals/90 mins and logged player value at the population level.
+
+$H_0: \beta_{\text{Goals/90}} = 0$
+$H_a: \beta_{\text{Goals/90}} \neq 0$
+
+There appears to be a positive relationship between goals/90 mins and player value as represented by 2.02891108 coefficient. Table 2 shows us that: (1) the 95% confidence interval for the population slope goals/90 mins is (-0.1069260, 2.30085549) positive on both tails; (2) the p-value $p$ \< 0.001 is very small suggesting it is statistically significant (p-value \<0.05), so we reject the null hypothesis $H_0$ that there is no relationship between player value and age in favor of the alternative hypothesis $H_a$ that there is a positive relationship.
+
+This means that taking into account potential sampling variation in results, the relationship appears to be positive.
+
+3\) **Null Hypothesis (H0):** All differences in intercepts for the non-baseline groups (Bundesliga, La Liga, Serie A, Premier League) are zero.
+
+**Alternative Hypothesis (HA):** At least one of the intercept differences is not equal to zero.
+
+$H_0: \beta_{\text{Ligue 1-League (B/LL/SA/PL)}} = 0$
+
+$H_a: \beta_{\text{Ligue 1-League (B/LL/SA/PL)}} \neq 0$
+
+While all observed differences were positive, Table 2 shows us that (1) the 95% confidence intervals for the population difference in intercept for each league with Ligue 1 only contain 0 for the Bundesliga (-0.1123613, 0.20608778). It is possible that the difference of the Bundesliga intercept is zero, thus it is possible that Ligue 1 and the Bundesliga have the same intercept, whereas the other leagues do not; (2) the p-value $p$ \< 0.001 are very small for all leagues, suggesting it is statistically significant (p-value \<0.05), so we reject the null hypothesis $H_0$ that the differences in intercept is 0 for all leagues, in favor of the alternative hypothesis $H_a$ that at least one league has an intercept difference not equal to zero.
+
+So it appears the differences in intercept are meaninfully different from 0, and hence all three intercepts are not roughly equal. This consistent with our observations from the visualization of the three regression lines in Figure 4.
 
 ### 3.5 Residual analysis
+
+I conducted a residual analysis to see if there was any systematic pattern of residuals for the prediction model. This is because if there are systematic patterns of residuals, I cannot fully trust the confidence intervals and p-values used.
+
+```{r}
+residuals_data <- augment(parallel_model)
+
+glimpse(residuals_data)
+```
+
+```{r}
+residuals_data |>
+  ggplot(aes(x = .resid)) +
+  geom_histogram(binwidth = 0.4, color = "navy") +
+  theme_minimal() +
+  labs(caption = "Figure 9: Histogram of residuals for prediction model", 
+       x = "Residuals", 
+       y = "Count")
+```
+
+```{r}
+residuals_data |>
+  ggplot(aes(x = Age, 
+             y = .resid)) +
+  geom_point(alpha = 0.4, color = "navy") + 
+  geom_smooth(method = lm, 
+            col = "pink") + 
+  theme_minimal() +
+  labs(caption = "Figure 10: Scatterplot of residuals against age", 
+       x = "Age", 
+       y = "Residuals")
+```
+
+```{r}
+residuals_data |>
+  ggplot(aes(x = `Gls/90 (20/21)`, 
+             y = .resid)) +
+  geom_point(alpha = 0.4, color = "navy") + 
+  geom_smooth(method = lm, 
+            col = "pink") + 
+  theme_minimal() +
+  labs(caption = "Figure 11: Scatterplot of residuals against Goals/90", 
+       x = "Goals/90 Min (2020-21)", 
+       y = "Residuals")
+```
+
+```{r}
+residuals_data |>
+  ggplot(aes(x = League, 
+             y = .resid)) +
+  geom_boxplot(alpha = 0.4, color = "navy") + 
+  geom_smooth(method = lm, 
+            col = "pink") + 
+  theme_minimal() +
+  labs(caption = "Figure 12: Scatterplot of residuals against League", 
+       x = "League", 
+       y = "Residuals")
+```
+
+```{r}
+residuals_data |>
+  ggplot(aes(x = log_value, 
+             y = .resid)) +
+  geom_point(alpha = 0.4, color = "navy") + 
+  geom_smooth(method = lm, 
+            col = "pink") + 
+  theme_minimal() +
+  labs(caption = "Figure 13: Scatterplot of residuals against Fitted Values", 
+       x = "Fitted Values", 
+       y = "Residuals")
+```
+
+The model residuals were normally distributed, but with a number of potential outliers at the bottom end. There were no systematic patterns to the explanatory variable plots, but there were some outliers in age (some younger players), goals/ 90 min, and at the top end of Ligue 1 and bottom of the Premier League.
+
+However, the fitted values plot showed a positive relationship which concludes the assumptions for inference in multiple linear regression were not all met. It would be useful to repeat the analysis without the outliers to see if this changes the results.
 
 ## 4. Discussion
 
 ### 4.1 Conclusions
 
+I found that as (1) age increased, logged player values decreased significantly; (2) as goals / 90 minutes increased, logged player values increased significantly; (3) there was a significant difference in logged player values across different leagues. On average, for each additional year old a player is, the logged player values decreased on average 0.095 points; for each additional goal/90 min a player scores, the logged player values increased on average 2.029 points. This however does not mean that age *causes* players to be worth less, or that goal/90 minute *cause* a player to be worth more, rather they are associated. It made sense to me that players in the Premier League are generally worth more than all other leagues, since it is commonly known as the most competitive and highest revenue generating European football league, which likely makes the best players want to play there. But I was suprised to find that Serie A player values are the next highest after the Premier League.
+
+Overall, these results suggest that age, goalscoring, and the league you play in is a factor in player value. My findings are consistent with previous studies showing that players peak when they are in their mid-20s. Teams who are seeking to recruit talent should factor this in when buying players, and perhaps look to avoid paying extra for a player in the Premier League whose stats are similar to a player in Ligue 1. That said, given the inherent differences in levels of competition and cultural differences across leagues, we cannot extrapolate that a Ligue 1 player with the same profile as a Premier League player is necessarily "worth more", only that he would be cheaper. Teams should also take this into consideration when building their squads from academies -- trying to send players on loan to countries where player value "higher" -- or when bringing in veteran talent who might be "undervalued" as people think he has passed the peak of his career.
+
 ### 4.2 Limitations
+
+There were several limitations to the data set. Firstly, 165 out of the 2075 players in the original dataset were missing values, so we had to exclude these. Furthermore, there were a number of outliers whose value is extremely large, which might skew the interpretations. The dataset is also limited to 2021 player values across the Big Five Leagues. As a result, our scope of inference is limited to these leagues, and we cannot generalize our findings regarding the impact of age and goals/90 minutes to players from other leagues.
+
+It is also important to recognize that goals/90 minutes is an important metric for attackers and perhaps midfielders, but is not as useful when evaluating the value of defenders and goalkeepers. In this case, it would be useful to segment by position and add new explanatory variables for defenders or goalkeepers such as tackles and clean sheets.
 
 ### 4.3 Further Questions
 
+If I was to continue researching the topic of player valuations in European football, I would like to use data that includes more leagues as well as updated values. As mentioned, the value of the football transfer market has seen a steady rise, but this has also been accompanied in recent years by more data-led recruitment strategies. It would be interesting to see how such analyses have evolved over time to see if the Moneyball approach has impacted the types of players the top leagues sign.
+
+It would be useful to add more explanatory variables, such as assists, tackles, successful passes, yellow cards, and many others. The results from such deeper analysis could be used by football clubs to help inform their football projects and player recruitment and development strategies.
+
 ## 5. Citations and References
+
+https://www.eurosport.com/football/transfers/2023-2024/global-transfer-record-broken-in-summer-2023-as-premier-league-and-saudi-pro-league-splash-out-recor_sto9770895/story.shtml
+
+https://theathletic.com/2935360/2021/11/15/what-age-do-players-in-different-positions-peak/
