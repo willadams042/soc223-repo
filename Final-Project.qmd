@@ -14,6 +14,7 @@ library(tidyverse)
 library(moderndive)
 library(worldfootballR)
 library(skimr)
+library(ggeffects)
 library(broom)
 options(scipen=999)
 ```
@@ -189,7 +190,7 @@ I chose the components of my multiple linear regression as the following:
 
 -   Categorical explanatory variable $x_3$ = League
 
-The unit of analysis is the log of player value in EUR. I favored the "parellel slopes" method after the results of the EDA.
+The unit of analysis is player value in EUR. I favored the "parellel slopes" method after the results of the EDA.
 
 ### 3.2 Model Results
 
@@ -209,6 +210,11 @@ print(confidence_intervals)
 
 ### 3.3 Interpreting the regression table
 
+```{r}
+ggpredict(parallel_model, terms = c("Age", "Gls/90 (20/21)", "League")) |> 
+            plot()
+```
+
 The regression equation for Log Player Value is as follows:
 
 $\widehat{log player value_i} = 17.55548400 - 0.09526848(Age_i) + 2.02891108(Goals/90_i)$
@@ -217,13 +223,13 @@ $+ 0.04686324 ⋅ 1_{is Bundesliga}(x_2) + 0.37350811 ⋅ 1_{is La Liga}(x_2)$
 
 $+ 0.97924822 ⋅ 1_{is Premier League}(x_2) + 0.32615866 ⋅ 1_{is Serie A}(x_2)$
 
--   The intercept (17.55548400) represents the Player Value when players are aged 0, score 0 goals/ 90 minutes, and play in Ligue 1 (Table 2).
+-   The intercept \[exp(17.55548400) = €42,096,872\] represents the Player Value when players are aged 0, score 0 goals/ 90 minutes, and play in Ligue 1 (Table 2).
 
--   The estimate for the slope for age (-0.09526848) is the associated change in average Player Value with each unit increase in age. Based on this estimate, for every extra year old a player is, there was an associted decrease in log Player Value of on average 0.09526848 points.
+-   The estimate for the slope for age \[exp(-0.09526848) = 1.099954\] is the associated percent change in average Player Value with each unit increase in age. Based on this estimate, for every extra year old a player is, there was an associated decrease in Player Value of on average 10.00%.
 
--   The estimate for the slope for Goals /90 min for 2020-21 (2.02891108) is the associated change in average Player Value with each unit increase in goals/90 minutes in 2020-21. Based on this estimate, for every extra 1 goal/90 minute a player scores, there was an associated increase log player value of on average 2.02891108 points.
+-   The estimate for the slope for Goals /90 min for 2020-21 \[exp(2.02891108) = 7.6058\] is the associated percent change in average Player Value with each unit increase in goals/90 minutes in 2020-21. Based on this estimate, for every extra 1 goal/90 minute a player scores, there was an associated increase player value of on average 660.58%.
 
--   The estimate for LeagueBundesliga (0.04686324), LeagueLa Liga (0.37350811), LeagueSerie A (0.32615866), and LeaguePremier League (0.97924822) are the offsets in intercept relative to the baseline group\'s, Ligue 1's, intercept (Table 2). In other words, on average Bundesliga players are valued 0.04686324 points higher than Ligue 1 players, La Liga players are valued 0.37350811 points higher than Ligue 1 players, Serie A players are valued 0.32615866 points higher than Ligue 1 players, and Premier League players are valued 0.97924822 points higher than Ligue 1 players.
+-   The estimate for LeagueBundesliga \[exp(0.04686324) = 1.047979\], LeagueLa Liga \[exp(0.37350811) = 1.452822\], LeagueSerie A \[exp(0.32615866) = 1.385635\], and LeaguePremier League \[exp(0.97924822) = 2.662454\] are the offsets in intercept relative to the baseline group's, Ligue 1's, intercept (Table 2). In other words, on average Bundesliga players are valued 4.80% higher than Ligue 1 players, La Liga players are valued 45.28% higher than Ligue 1 players, Serie A players are valued 38.56% higher than Ligue 1 players, and Premier League players are valued 166.25% higher than Ligue 1 players.
 
 Thus the five regression lines are:
 
@@ -245,8 +251,7 @@ Using the output of my regression table I decided to test three different null h
 
 **Alternative Hypothesis (HA):** There is a relationship between age and logged player value at the population level.
 
-$H_0: \beta_{\text{Age}} = 0$
-$H_a: \beta_{\text{Age}} \neq 0$
+$H_0: \beta_{\text{Age}} = 0$ $H_a: \beta_{\text{Age}} \neq 0$
 
 There appears to be a negative relationship between age and player value as represented by -0.09526848 coefficient. Table 2 shows us that: (1) the 95% confidence interval for the population slope Age is (1.7569667, -0.08361093) negative on both tails; (2) the p-value $p$ \< 0.001 is very small suggesting it is statistically significant (p-value \<0.05), so we reject the null hypothesis $H_0$ that there is no relationship between player value and age in favor of the alternative hypothesis $H_a$ that there is a negative relationship.
 
@@ -256,8 +261,7 @@ This means that taking into account potential sampling variation in results, the
 
 **Alternative Hypothesis (HA):** There is a relationship between goals/90 mins and logged player value at the population level.
 
-$H_0: \beta_{\text{Goals/90}} = 0$
-$H_a: \beta_{\text{Goals/90}} \neq 0$
+$H_0: \beta_{\text{Goals/90}} = 0$ $H_a: \beta_{\text{Goals/90}} \neq 0$
 
 There appears to be a positive relationship between goals/90 mins and player value as represented by 2.02891108 coefficient. Table 2 shows us that: (1) the 95% confidence interval for the population slope goals/90 mins is (-0.1069260, 2.30085549) positive on both tails; (2) the p-value $p$ \< 0.001 is very small suggesting it is statistically significant (p-value \<0.05), so we reject the null hypothesis $H_0$ that there is no relationship between player value and age in favor of the alternative hypothesis $H_a$ that there is a positive relationship.
 
@@ -355,7 +359,7 @@ However, the fitted values plot showed a positive relationship which concludes t
 
 ### 4.1 Conclusions
 
-I found that as (1) age increased, logged player values decreased significantly; (2) as goals / 90 minutes increased, logged player values increased significantly; (3) there was a significant difference in logged player values across different leagues. On average, for each additional year old a player is, the logged player values decreased on average 0.095 points; for each additional goal/90 min a player scores, the logged player values increased on average 2.029 points. This however does not mean that age *causes* players to be worth less, or that goal/90 minute *cause* a player to be worth more, rather they are associated. It made sense to me that players in the Premier League are generally worth more than all other leagues, since it is commonly known as the most competitive and highest revenue generating European football league, which likely makes the best players want to play there. But I was suprised to find that Serie A player values are the next highest after the Premier League.
+I found that as (1) age increased, player values decreased significantly; (2) as goals / 90 minutes increased, player values increased significantly; (3) there was a significant difference in player values across different leagues. On average, for each additional year old a player is, the player values decreased on average 10%; for each additional goal/90 min a player scores, the logged player values increased on average 660.58%. This however does not mean that age *causes* players to be worth less, or that goal/90 minute *cause* a player to be worth more, rather they are associated. It made sense to me that players in the Premier League are generally worth more than all other leagues, since it is commonly known as the most competitive and highest revenue generating European football league, which likely makes the best players want to play there. But I was surprised to find that Serie A player values are the next highest after the Premier League.
 
 Overall, these results suggest that age, goalscoring, and the league you play in is a factor in player value. My findings are consistent with previous studies showing that players peak when they are in their mid-20s. Teams who are seeking to recruit talent should factor this in when buying players, and perhaps look to avoid paying extra for a player in the Premier League whose stats are similar to a player in Ligue 1. That said, given the inherent differences in levels of competition and cultural differences across leagues, we cannot extrapolate that a Ligue 1 player with the same profile as a Premier League player is necessarily "worth more", only that he would be cheaper. Teams should also take this into consideration when building their squads from academies -- trying to send players on loan to countries where player value "higher" -- or when bringing in veteran talent who might be "undervalued" as people think he has passed the peak of his career.
 
