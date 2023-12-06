@@ -12,7 +12,8 @@ toc: true
 ---
 
 <div style="font-size: 80%;">
----
+
+------------------------------------------------------------------------
 
 ```{r}
 library(tidyverse)
@@ -26,7 +27,6 @@ options(scipen=999)
 
 ```{r, message = FALSE}
 
-#https://www.kaggle.com/datasets/sanjitva/predicting-soccer-player-transfer-values/data
 soccer_players <- read_csv("/Users/williamadams/desktop/soccer_dataset_21.csv")
 
 soccer_players_flt <- soccer_players |>
@@ -41,7 +41,7 @@ The business model of professional European football has reached a point of reck
 
 This study aims to better understand what factors influence market value in players to help clubs move towards more sustainable transfer models. By analyzing what factors contribute towards player market value, clubs can be more prudent in their player trading and academy development philosophies. The project investigates whether factors such as nationality, age, and position are related to player market value.
 
-To address this question, I used a data set from Kaggle that scraped information on global soccer players from Transfermarkt and fbref.com. The data was last updated on September 2nd, 2021. Each case in the data set is a different player. Table 1 displays a snapshot of 5 randomly chosen rows of the data set being used.
+To address this question, I used a data set from Kaggle that scraped information on global soccer players from Transfermarkt and fbref.com^2^. The data was last updated on September 2nd, 2021. Each case in the data set is a different player. Table 1 displays a snapshot of 5 randomly chosen rows of the data set being used.
 
 ```{r}
 sample_rows <- soccer_players_flt |>
@@ -257,17 +257,14 @@ The Model 2 regression equation for Log Player Value is as follows:
 
 <br>
 
-$\begin{gather}
-\widehat{\log \text{player value}_i} = 7.39541 + 0.66928(Age_i) - 0.01403 (Age)^2 + 2.09663(Goals/90_i)\\ -0.00151 \cdot 1_{\text{is Bundesliga}}(x_2) + 0.28702 \cdot 1_{\text{is La Liga}}(x_2) + 0.87602 \cdot 1_{\text{is Premier League}}(x_2) + 0.28117 \cdot 1_{\text{is Serie A}}(x_2)
-\end{gather}$
+$\begin{gather} \widehat{\log \text{player value}_i} = 7.39541 + 0.66928(Age_i) - 0.01403 (Age)^2 + 2.09663(Goals/90_i)\\ -0.00151 \cdot 1_{\text{is Bundesliga}}(x_2) + 0.28702 \cdot 1_{\text{is La Liga}}(x_2) + 0.87602 \cdot 1_{\text{is Premier League}}(x_2) + 0.28117 \cdot 1_{\text{is Serie A}}(x_2) \end{gather}$
 
 <br>
 
 -   The intercept \[exp(7.39541) = €1,628.492\] represents the Player Value when players are aged 0, score 0 goals/ 90 minutes, and play in Ligue 1 (Table 5).
 
-```{=html}
 <!-- -->
-```
+
 -   The estimate for the slope for the linear part of age \[exp(0.66928) = 1.952831\] is the associated percent change in average Player Value with each unit increase in age. Based on this estimate, for every extra year old a player is, there was an associated increase in Player Value of on average 95.28%. However, the negative quadratic term indicates a concave shape to this relationship, meaning the effect of age on Player Value is not strictly linear; rather, it may increase/ decrease at an increasing/ decreasing rate depending on the age value. For example, when age goes from 19-20, we can see an associated increase in player log value (Figure 10), whereas when age goes from 29-30, we observe an associated decrease in player log value (Figure 10), holding all other variables constant.
 
 ```{r}
@@ -427,7 +424,7 @@ The fitted values plot showed a positive relationship to match the assumptions o
 
 I found that as (1) age increased, player values increased/decreased significantly depending on the age the player was; (2) as goals / 90 minutes increased, player values increased significantly; (3) there was a significant difference in player values across different leagues. On average, for each additional year old a player is, the player values increased (generally up to the age of 24/25) or decreased (beyond 24/25); for each additional goal/90 min a player scores, the player values increased on average 713.87%. This however does not mean that age *causes* players to be worth less, or that goal/90 minute *cause* a player to be worth more, rather they are associated. It made sense to me that players in the Premier League are generally worth more than all other leagues, since it is commonly known as the most competitive and highest revenue generating European football league, which likely makes the best players want to play there. But I was surprised to find that Serie A player values are the next highest after the Premier League. I expected La Liga players to be next, but maybe this value is skewed slightly by the highest valued players.
 
-Overall, these results suggest that age, goalscoring, and the league you play in is a factor in player value. My findings are consistent with previous studies showing that players peak when they are in their mid-20s. Teams who are seeking to recruit talent should factor this in when buying players, and perhaps look to avoid paying extra for a player in the Premier League whose stats are similar to a player in Ligue 1. That said, given the inherent differences in levels of competition and cultural differences across leagues, we cannot extrapolate that a Ligue 1 player with the same profile as a Premier League player is necessarily "worth more", only that he would be cheaper. Teams should also take this into consideration when building their squads from academies -- trying to send players on loan to countries where player value "higher" -- or when bringing in veteran talent who might be "undervalued" as people think he has passed the peak of his career.
+Overall, these results suggest that age, goalscoring, and the league you play in is a factor in player value. My findings are consistent with previous studies showing that players peak when they are in their mid-20s^3^. Teams who are seeking to recruit talent should factor this in when buying players, and perhaps look to avoid paying extra for a player in the Premier League whose stats are similar to a player in Ligue 1. That said, given the inherent differences in levels of competition and cultural differences across leagues, we cannot extrapolate that a Ligue 1 player with the same profile as a Premier League player is necessarily "worth more", only that he would be cheaper. Teams should also take this into consideration when building their squads from academies -- trying to send players on loan to countries where player value "higher" -- or when bringing in veteran talent who might be "undervalued" as people think he has passed the peak of his career.
 
 ### 4.2 Limitations
 
@@ -445,4 +442,6 @@ It would be useful to add more explanatory variables, such as assists, tackles, 
 
 ^1^ Eurosport (2023). "Global transfer record broken in summer 2023 as Premier League and Saudi Pro League splash out." Eurosport. Retrieved from <https://www.eurosport.com/football/transfers/2023-2024/global-transfer-record-broken-in-summer-2023-as-premier-league-and-saudi-pro-league-splash-out-recor_sto9770895/story.shtml>
 
-^2^ The Athletic (2021). "What age do players in different positions peak?" The Athletic. Retrieved from <https://theathletic.com/2935360/2021/11/15/what-age-do-players-in-different-positions-peak/>
+^2^ Varma, Sanjit. (2021). Predicting Soccer Player Transfer Values. Kaggle. <https://www.kaggle.com/datasets/sanjitva/predicting-soccer-player-transfer-values>
+
+3 The Athletic (2021). "What age do players in different positions peak?" The Athletic. Retrieved from <https://theathletic.com/2935360/2021/11/15/what-age-do-players-in-different-positions-peak/>
